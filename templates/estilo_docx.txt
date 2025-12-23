@@ -1,0 +1,70 @@
+---
+# === BLOQUE DE ESTILO PROFESIONAL DOCX/PDF ===
+output_format: docx
+renderer: pandoc
+
+pandoc:
+  from: "gfm"
+  to: "docx"
+  args:
+    - "--reference-doc=templates/orm_profesional_base_final.docx"
+    - "--variable=mainfont:Arial"
+    - "--variable=fontsize:12pt"
+    - "--variable=geometry:top=2.5cm,bottom=2.5cm,left=2.5cm,right=2.5cm"
+
+style:
+  font_family: Arial
+  font_size: 12pt
+  heading_font: Arial
+  heading_color: "#000000"
+  paragraph_spacing: 1.15
+  alignment: justify
+
+  # === TABLAS ESTILO EXCEL PROFESIONAL ===
+  table_style: ExcelProfessional
+  table_font_family: Arial
+  table_font_size: 11.5pt
+  table_header_background: "#f2f2f2"
+  table_header_font_color: "#000000"
+  table_header_font_weight: bold
+  table_border_color: "#d0d0d0"
+  table_border_width: 0.5pt
+  table_cell_padding: 6pt
+  table_row_alternating_shade: "#fafafa"
+
+  # === ENCABEZADOS Y SECCIONES ===
+  h1_size: 18pt
+  h2_size: 15pt
+  h3_size: 13pt
+  h1_spacing_before: 12pt
+  h2_spacing_before: 10pt
+  h3_spacing_before: 8pt
+  h_spacing_after: 4pt
+
+  # === MÁRGENES Y DISTRIBUCIÓN ===
+  page_margins:
+    top: 2.5cm
+    bottom: 2.5cm
+    left: 2.5cm
+    right: 2.5cm
+
+  # === ENCABEZADO Y PIE DE PÁGINA ===
+  header_style:
+    font_family: Arial
+    font_size: 10pt
+    alignment: right
+    color: "#888888"
+  footer_style:
+    font_family: Arial
+    font_size: 10pt
+    alignment: center
+    color: "#888888"
+
+# === NORMAS DE CONTENIDO ===
+content_rules:
+  - Usar tono formal, profesional y analítico.
+  - No incluir emojis ni íconos decorativos.
+  - Tablas limpias con bordes grises y fondo alterno.
+  - Márgenes amplios y texto justificado.
+  - Encabezados con jerarquía clara (H1/H2/H3).
+---

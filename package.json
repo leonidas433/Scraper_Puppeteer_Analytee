@@ -1,0 +1,30 @@
+{
+  "name": "scraper-final",
+  "version": "3.4.0",
+  "description": "Versión final optimizada del Scraper Suite - Scraping + Análisis Integrado",
+  "main": "run.js",
+  "type": "module",
+  "scripts": {
+    "start": "node run.js",
+    "metadata": "node scripts/js/scrape_metadata.js",
+    "reviews": "node modules/reviews_scraper.js",
+    "proxies": "node modules/test_proxies.js",
+    "analysis": "node modules/analysis_runner.js"
+  },
+  "dependencies": {
+    "chalk": "^5.6.2",
+    "dotenv": "^17.2.3",
+    "inquirer": "^9.2.16",
+    "node-fetch": "^3.3.2",
+    "puppeteer": "^24.25.0",
+    "puppeteer-extra": "^3.3.6",
+    "puppeteer-extra-plugin-anonymize-ua": "^2.4.6",
+    "puppeteer-extra-plugin-stealth": "^2.11.2",
+    "winston": "^3.18.3"
+  },
+  "engines": {
+    "node": ">=20.0.0"
+  },
+  "author": "KiloCode & VSCode Integration",
+  "license": "MIT"
+}

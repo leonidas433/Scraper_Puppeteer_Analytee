@@ -1,0 +1,35 @@
+=== INFORMACIÓN BÁSICA ===
+Nombre del lugar: {PLACE_NAME}
+Dirección: {ADDRESS}
+Teléfono: {PHONE}
+Sitio web: {WEBSITE}
+Horarios: {SCHEDULE}
+Calificación promedio: {RATING}
+Número de reseñas: {REVIEWS_COUNT}
+Categoría: {CATEGORY}
+Nivel de precio: {PRICE_LEVEL}
+ID del lugar (Place ID): {PLACE_ID}
+CID: {CID}
+Latitud: {LAT}
+Longitud: {LNG}
+Enlace del lugar: https://www.google.com/maps?cid={CID}
+Enlace de reseñas: https://search.google.com/local/reviews?placeid={PLACE_ID}
+
+=== INFORMACIÓN EXTENDIDA ===
+Estado del negocio: {BUSINESS_STATUS}
+Tipos de establecimiento: {TYPES}
+Teléfono internacional: {INT_PHONE}
+Dirección formateada: {FORMATTED_ADDRESS}
+Dirección ADR: {ADR_ADDRESS}
+Componentes de dirección: número: {STREET_NUMBER}; calle: {STREET}; barrio: {DISTRICT}; ciudad: {CITY}; provincia: {PROVINCE}; comunidad: {STATE}; país: {COUNTRY}; código postal: {ZIP_CODE}
+Horarios detallados: {DETAILED_SCHEDULE}
+Vista del mapa (viewport): NE ({NE_LAT}, {NE_LNG}) / SW ({SW_LAT}, {SW_LNG})
+Color de fondo del ícono: {ICON_COLOR}
+URI de máscara del ícono: {ICON_URI}
+Listado de fotos: {PHOTOS_LIST}
+
+=== INFORMACIÓN ADICIONAL ===
+Descripción del lugar: {DESCRIPTION}
+Reseñas destacadas: {HIGHLIGHTED_REVIEWS}
+Respuestas del propietario: {OWNER_RESPONSES}
+Última actualización: {TIMESTAMP}

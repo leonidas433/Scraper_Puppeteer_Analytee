@@ -1,0 +1,481 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.plot.ly/plotly-3.1.1.min.js"></script>
+    <script> window.FontAwesomeConfig = { autoReplaceSvg: 'nest'};</script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/js/all.min.js" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        ::-webkit-scrollbar { display: none; }
+    </style>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        'inter': ['Inter', 'sans-serif'],
+                    },
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-gray-50 font-inter">
+
+    <!-- Header Section -->
+    <header id="header" class="bg-white border-b border-gray-200 px-8 py-6">
+        <div class="max-w-7xl mx-auto">
+            <div class="flex items-center justify-between">
+                <div>
+                    <h1 class="text-3xl font-bold text-gray-900">Resultados del Análisis OMG+CX</h1>
+                    <p class="text-lg text-gray-600 mt-1">Panel de Indicadores Clave</p>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <div class="text-right">
+                        <div class="text-sm text-gray-500">Place ID: REST_001_BCN</div>
+                        <div class="text-sm text-gray-500">Análisis: 15 Nov 2024</div>
+                    </div>
+                    <div class="flex space-x-2">
+                        <span class="px-3 py-1 bg-blue-100 text-blue-800 text-xs font-medium rounded-full">OMG</span>
+                        <span class="px-3 py-1 bg-green-100 text-green-800 text-xs font-medium rounded-full">CX</span>
+                        <span class="px-3 py-1 bg-purple-100 text-purple-800 text-xs font-medium rounded-full">IA Analyzer v2.3</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Dashboard Content -->
+    <main class="max-w-7xl mx-auto px-8 py-8 space-y-8">
+
+        <!-- KPIs Principales -->
+        <section id="kpis-principales" class="grid grid-cols-6 gap-6">
+            <div class="bg-white rounded-lg border border-gray-200 p-6">
+                <div class="flex items-center justify-between mb-4">
+                    <div class="p-2 bg-blue-100 rounded-lg">
+                        <i class="fa-solid fa-star text-blue-600"></i>
+                    </div>
+                    <span class="text-green-500 text-sm font-medium flex items-center">
+                        <i class="fa-solid fa-arrow-up mr-1"></i>12%
+                    </span>
+                </div>
+                <div class="text-3xl font-bold text-gray-900 mb-2">1,247</div>
+                <div class="text-sm text-gray-600">Total reseñas analizadas</div>
+                <div class="text-xs text-gray-500 mt-1">Crecimiento mensual constante</div>
+            </div>
+
+            <div class="bg-white rounded-lg border border-gray-200 p-6">
+                <div class="flex items-center justify-between mb-4">
+                    <div class="p-2 bg-red-100 rounded-lg">
+                        <i class="fa-solid fa-exclamation-triangle text-red-600"></i>
+                    </div>
+                    <span class="text-red-500 text-sm font-medium flex items-center">
+                        <i class="fa-solid fa-arrow-up mr-1"></i>3%
+                    </span>
+                </div>
+                <div class="text-3xl font-bold text-gray-900 mb-2">8.2%</div>
+                <div class="text-sm text-gray-600">Reseñas sospechosas</div>
+                <div class="text-xs text-gray-500 mt-1">Detectados patrones anómalos</div>
+            </div>
+
+            <div class="bg-white rounded-lg border border-gray-200 p-6">
+                <div class="flex items-center justify-between mb-4">
+                    <div class="p-2 bg-yellow-100 rounded-lg">
+                        <i class="fa-solid fa-chart-line text-yellow-600"></i>
+                    </div>
+                    <span class="text-green-500 text-sm font-medium flex items-center">
+                        <i class="fa-solid fa-arrow-up mr-1"></i>0.2
+                    </span>
+                </div>
+                <div class="text-3xl font-bold text-gray-900 mb-2">4.3</div>
+                <div class="text-sm text-gray-600">Valoración media</div>
+                <div class="text-xs text-gray-500 mt-1">Mejora gradual detectada</div>
+            </div>
+
+            <div class="bg-white rounded-lg border border-gray-200 p-6">
+                <div class="flex items-center justify-between mb-4">
+                    <div class="p-2 bg-green-100 rounded-lg">
+                        <i class="fa-solid fa-thumbs-up text-green-600"></i>
+                    </div>
+                    <span class="text-green-500 text-sm font-medium flex items-center">
+                        <i class="fa-solid fa-arrow-up mr-1"></i>15
+                    </span>
+                </div>
+                <div class="text-3xl font-bold text-gray-900 mb-2">72</div>
+                <div class="text-sm text-gray-600">NPS estimado</div>
+                <div class="text-xs text-gray-500 mt-1">Zona de promotores</div>
+            </div>
+
+            <div class="bg-white rounded-lg border border-gray-200 p-6">
+                <div class="flex items-center justify-between mb-4">
+                    <div class="p-2 bg-purple-100 rounded-lg">
+                        <i class="fa-solid fa-calendar text-purple-600"></i>
+                    </div>
+                    <span class="text-gray-500 text-sm font-medium flex items-center">
+                        <i class="fa-solid fa-minus mr-1"></i>0%
+                    </span>
+                </div>
+                <div class="text-3xl font-bold text-gray-900 mb-2">42</div>
+                <div class="text-sm text-gray-600">Reseñas/mes</div>
+                <div class="text-xs text-gray-500 mt-1">Frecuencia estable</div>
+            </div>
+
+            <div class="bg-white rounded-lg border border-gray-200 p-6">
+                <div class="flex items-center justify-between mb-4">
+                    <div class="p-2 bg-indigo-100 rounded-lg">
+                        <i class="fa-solid fa-reply text-indigo-600"></i>
+                    </div>
+                    <span class="text-red-500 text-sm font-medium flex items-center">
+                        <i class="fa-solid fa-arrow-down mr-1"></i>5%
+                    </span>
+                </div>
+                <div class="text-3xl font-bold text-gray-900 mb-2">68%</div>
+                <div class="text-sm text-gray-600">Ratio respuesta</div>
+                <div class="text-xs text-gray-500 mt-1">Mejorar engagement</div>
+            </div>
+        </section>
+
+        <!-- Semáforo y Distribución -->
+        <section id="semaforo-distribucion" class="grid grid-cols-3 gap-6">
+            <div class="bg-white rounded-lg border border-gray-200 p-6">
+                <h3 class="text-lg font-semibold text-gray-900 mb-6">Semáforo de Reputación</h3>
+                <div class="flex items-center justify-center mb-4">
+                    <div class="w-24 h-24 bg-yellow-100 rounded-full flex items-center justify-center border-4 border-yellow-400">
+                        <i class="fa-solid fa-exclamation text-yellow-600 text-2xl"></i>
+                    </div>
+                </div>
+                <div class="text-center">
+                    <div class="text-xl font-bold text-yellow-600 mb-2">PRECAUCIÓN</div>
+                    <p class="text-sm text-gray-600">Valoración media aceptable pero con patrones de reseñas sospechosas detectados</p>
+                </div>
+            </div>
+
+            <div class="col-span-2 bg-white rounded-lg border border-gray-200 p-6">
+                <h3 class="text-lg font-semibold text-gray-900 mb-6">Distribución por Estrellas</h3>
+                <div class="space-y-4">
+                    <div class="flex items-center">
+                        <span class="w-12 text-sm font-medium text-gray-600">5★</span>
+                        <div class="flex-1 mx-4 bg-gray-200 rounded-full h-3">
+                            <div class="bg-green-500 h-3 rounded-full" style="width: 45%"></div>
+                        </div>
+                        <span class="w-12 text-sm font-medium text-gray-900">45%</span>
+                    </div>
+                    <div class="flex items-center">
+                        <span class="w-12 text-sm font-medium text-gray-600">4★</span>
+                        <div class="flex-1 mx-4 bg-gray-200 rounded-full h-3">
+                            <div class="bg-blue-500 h-3 rounded-full" style="width: 28%"></div>
+                        </div>
+                        <span class="w-12 text-sm font-medium text-gray-900">28%</span>
+                    </div>
+                    <div class="flex items-center">
+                        <span class="w-12 text-sm font-medium text-gray-600">3★</span>
+                        <div class="flex-1 mx-4 bg-gray-200 rounded-full h-3">
+                            <div class="bg-yellow-500 h-3 rounded-full" style="width: 12%"></div>
+                        </div>
+                        <span class="w-12 text-sm font-medium text-gray-900">12%</span>
+                    </div>
+                    <div class="flex items-center">
+                        <span class="w-12 text-sm font-medium text-gray-600">2★</span>
+                        <div class="flex-1 mx-4 bg-gray-200 rounded-full h-3">
+                            <div class="bg-orange-500 h-3 rounded-full" style="width: 8%"></div>
+                        </div>
+                        <span class="w-12 text-sm font-medium text-gray-900">8%</span>
+                    </div>
+                    <div class="flex items-center">
+                        <span class="w-12 text-sm font-medium text-gray-600">1★</span>
+                        <div class="flex-1 mx-4 bg-gray-200 rounded-full h-3">
+                            <div class="bg-red-500 h-3 rounded-full" style="width: 7%"></div>
+                        </div>
+                        <span class="w-12 text-sm font-medium text-gray-900">7%</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Análisis de Sentimiento y Matriz Temática -->
+        <section id="sentimiento-matriz" class="grid grid-cols-2 gap-6">
+            <div class="bg-white rounded-lg border border-gray-200 p-6">
+                <h3 class="text-lg font-semibold text-gray-900 mb-6">Análisis de Sentimiento</h3>
+                <div id="sentiment-chart" style="height: 300px;"></div>
+            </div>
+
+            <div class="bg-white rounded-lg border border-gray-200 p-6">
+                <h3 class="text-lg font-semibold text-gray-900 mb-6">Matriz Temática OMG</h3>
+                <div class="space-y-4">
+                    <div class="border border-gray-200 rounded-lg p-4">
+                        <div class="flex justify-between items-center mb-2">
+                            <span class="font-medium text-gray-900">Calidad</span>
+                            <div class="flex space-x-2">
+                                <span class="px-2 py-1 bg-green-100 text-green-800 text-xs rounded">78% +</span>
+                                <span class="px-2 py-1 bg-red-100 text-red-800 text-xs rounded">22% -</span>
+                            </div>
+                        </div>
+                        <p class="text-sm text-gray-600">Productos frescos y bien preparados</p>
+                    </div>
+                    
+                    <div class="border border-gray-200 rounded-lg p-4">
+                        <div class="flex justify-between items-center mb-2">
+                            <span class="font-medium text-gray-900">Atención</span>
+                            <div class="flex space-x-2">
+                                <span class="px-2 py-1 bg-green-100 text-green-800 text-xs rounded">65% +</span>
+                                <span class="px-2 py-1 bg-red-100 text-red-800 text-xs rounded">35% -</span>
+                            </div>
+                        </div>
+                        <p class="text-sm text-gray-600">Personal amable pero mejoras en rapidez</p>
+                    </div>
+
+                    <div class="border border-gray-200 rounded-lg p-4">
+                        <div class="flex justify-between items-center mb-2">
+                            <span class="font-medium text-gray-900">Tiempos</span>
+                            <div class="flex space-x-2">
+                                <span class="px-2 py-1 bg-green-100 text-green-800 text-xs rounded">42% +</span>
+                                <span class="px-2 py-1 bg-red-100 text-red-800 text-xs rounded">58% -</span>
+                            </div>
+                        </div>
+                        <p class="text-sm text-gray-600">Principal punto de fricción detectado</p>
+                    </div>
+
+                    <div class="border border-gray-200 rounded-lg p-4">
+                        <div class="flex justify-between items-center mb-2">
+                            <span class="font-medium text-gray-900">Precio/Valor</span>
+                            <div class="flex space-x-2">
+                                <span class="px-2 py-1 bg-green-100 text-green-800 text-xs rounded">72% +</span>
+                                <span class="px-2 py-1 bg-red-100 text-red-800 text-xs rounded">28% -</span>
+                            </div>
+                        </div>
+                        <p class="text-sm text-gray-600">Relación calidad-precio valorada positivamente</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- KPI CX y Percepción de Productos -->
+        <section id="kpi-cx-productos" class="grid grid-cols-2 gap-6">
+            <div class="bg-white rounded-lg border border-gray-200 p-6">
+                <h3 class="text-lg font-semibold text-gray-900 mb-6">KPI CX (Experiencia Cliente)</h3>
+                <div class="grid grid-cols-2 gap-4">
+                    <div class="text-center p-4 border border-gray-200 rounded-lg">
+                        <div class="text-2xl font-bold text-gray-900 mb-1">2.3h</div>
+                        <div class="text-sm text-gray-600">Tiempo respuesta</div>
+                    </div>
+                    <div class="text-center p-4 border border-gray-200 rounded-lg">
+                        <div class="text-2xl font-bold text-gray-900 mb-1">68%</div>
+                        <div class="text-sm text-gray-600">Ratio respuesta</div>
+                    </div>
+                    <div class="text-center p-4 border border-gray-200 rounded-lg">
+                        <div class="text-2xl font-bold text-gray-900 mb-1">7.2/10</div>
+                        <div class="text-sm text-gray-600">Calidad respuesta</div>
+                    </div>
+                    <div class="text-center p-4 border border-gray-200 rounded-lg">
+                        <div class="text-2xl font-bold text-gray-900 mb-1">18min</div>
+                        <div class="text-sm text-gray-600">Tiempo espera promedio</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-lg border border-gray-200 p-6">
+                <h3 class="text-lg font-semibold text-gray-900 mb-6">Percepción Productos/Servicios</h3>
+                <div class="grid grid-cols-2 gap-4">
+                    <div class="text-center p-4 border border-gray-200 rounded-lg">
+                        <div class="text-lg font-semibold text-gray-900 mb-2">Presentación</div>
+                        <div class="flex justify-center space-x-2">
+                            <span class="text-green-600 font-medium">82%</span>
+                            <span class="text-gray-400">vs</span>
+                            <span class="text-red-600 font-medium">18%</span>
+                        </div>
+                    </div>
+                    <div class="text-center p-4 border border-gray-200 rounded-lg">
+                        <div class="text-lg font-semibold text-gray-900 mb-2">Calidad</div>
+                        <div class="flex justify-center space-x-2">
+                            <span class="text-green-600 font-medium">78%</span>
+                            <span class="text-gray-400">vs</span>
+                            <span class="text-red-600 font-medium">22%</span>
+                        </div>
+                    </div>
+                    <div class="text-center p-4 border border-gray-200 rounded-lg">
+                        <div class="text-lg font-semibold text-gray-900 mb-2">Cantidad</div>
+                        <div class="flex justify-center space-x-2">
+                            <span class="text-green-600 font-medium">65%</span>
+                            <span class="text-gray-400">vs</span>
+                            <span class="text-red-600 font-medium">35%</span>
+                        </div>
+                    </div>
+                    <div class="text-center p-4 border border-gray-200 rounded-lg">
+                        <div class="text-lg font-semibold text-gray-900 mb-2">Precio</div>
+                        <div class="flex justify-center space-x-2">
+                            <span class="text-green-600 font-medium">72%</span>
+                            <span class="text-gray-400">vs</span>
+                            <span class="text-red-600 font-medium">28%</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Reseñas Sospechosas y Línea de Tiempo -->
+        <section id="sospechosas-timeline" class="grid grid-cols-3 gap-6">
+            <div class="bg-white rounded-lg border border-gray-200 p-6">
+                <h3 class="text-lg font-semibold text-gray-900 mb-6">Reseñas Sospechosas</h3>
+                <div class="space-y-4">
+                    <div class="text-center p-3 border border-red-200 rounded-lg bg-red-50">
+                        <div class="text-xl font-bold text-red-600">102</div>
+                        <div class="text-sm text-gray-600">Total detectadas</div>
+                    </div>
+                    <div class="space-y-2">
+                        <div class="flex justify-between text-sm">
+                            <span class="text-gray-600">Duplicados</span>
+                            <span class="font-medium">34</span>
+                        </div>
+                        <div class="flex justify-between text-sm">
+                            <span class="text-gray-600">Patrones anómalos</span>
+                            <span class="font-medium">28</span>
+                        </div>
+                        <div class="flex justify-between text-sm">
+                            <span class="text-gray-600">Ráfagas</span>
+                            <span class="font-medium">40</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-span-2 bg-white rounded-lg border border-gray-200 p-6">
+                <h3 class="text-lg font-semibold text-gray-900 mb-6">Línea de Tiempo Reputación</h3>
+                <div id="timeline-chart" style="height: 250px;"></div>
+            </div>
+        </section>
+
+        <!-- Fortalezas y Fricciones -->
+        <section id="fortalezas-fricciones" class="grid grid-cols-2 gap-6">
+            <div class="bg-white rounded-lg border border-gray-200 p-6">
+                <h3 class="text-lg font-semibold text-green-700 mb-6 flex items-center">
+                    <i class="fa-solid fa-check-circle mr-2"></i>
+                    Fortalezas Detectadas
+                </h3>
+                <ul class="space-y-3">
+                    <li class="flex items-start">
+                        <i class="fa-solid fa-plus text-green-600 mt-1 mr-3"></i>
+                        <span class="text-gray-700">Calidad consistente de productos frescos</span>
+                    </li>
+                    <li class="flex items-start">
+                        <i class="fa-solid fa-plus text-green-600 mt-1 mr-3"></i>
+                        <span class="text-gray-700">Excelente relación calidad-precio percibida</span>
+                    </li>
+                    <li class="flex items-start">
+                        <i class="fa-solid fa-plus text-green-600 mt-1 mr-3"></i>
+                        <span class="text-gray-700">Ambiente acogedor y presentación cuidada</span>
+                    </li>
+                    <li class="flex items-start">
+                        <i class="fa-solid fa-plus text-green-600 mt-1 mr-3"></i>
+                        <span class="text-gray-700">Personal amable y conocedor del producto</span>
+                    </li>
+                </ul>
+            </div>
+
+            <div class="bg-white rounded-lg border border-gray-200 p-6">
+                <h3 class="text-lg font-semibold text-red-700 mb-6 flex items-center">
+                    <i class="fa-solid fa-exclamation-triangle mr-2"></i>
+                    Puntos de Fricción
+                </h3>
+                <ul class="space-y-3">
+                    <li class="flex items-start">
+                        <i class="fa-solid fa-minus text-red-600 mt-1 mr-3"></i>
+                        <span class="text-gray-700">Tiempos de espera excesivos en horas pico</span>
+                    </li>
+                    <li class="flex items-start">
+                        <i class="fa-solid fa-minus text-red-600 mt-1 mr-3"></i>
+                        <span class="text-gray-700">Gestión de reservas poco eficiente</span>
+                    </li>
+                    <li class="flex items-start">
+                        <i class="fa-solid fa-minus text-red-600 mt-1 mr-3"></i>
+                        <span class="text-gray-700">Ratio de respuesta a reseñas bajo</span>
+                    </li>
+                    <li class="flex items-start">
+                        <i class="fa-solid fa-minus text-red-600 mt-1 mr-3"></i>
+                        <span class="text-gray-700">Detección de reseñas sospechosas elevada</span>
+                    </li>
+                </ul>
+            </div>
+        </section>
+
+        <!-- Mini Panel SEO y Acciones -->
+        <section id="seo-acciones" class="grid grid-cols-3 gap-6">
+            <div class="bg-white rounded-lg border border-gray-200 p-6">
+                <h3 class="text-lg font-semibold text-gray-900 mb-6">Mini Panel SEO Local</h3>
+                <div class="space-y-4">
+                    <div class="flex justify-between items-center">
+                        <span class="text-sm text-gray-600">Reseñas recientes (30d)</span>
+                        <span class="font-semibold text-gray-900">42</span>
+                    </div>
+                    <div class="flex justify-between items-center">
+                        <span class="text-sm text-gray-600">Índice visibilidad</span>
+                        <span class="font-semibold text-green-600">78/100</span>
+                    </div>
+                    <div class="flex justify-between items-center">
+                        <span class="text-sm text-gray-600">Tendencia interacción</span>
+                        <span class="font-semibold text-blue-600 flex items-center">
+                            <i class="fa-solid fa-arrow-up mr-1"></i>+12%
+                        </span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-span-2 bg-white rounded-lg border border-gray-200 p-6">
+                <h3 class="text-lg font-semibold text-gray-900 mb-6">Acciones Recomendadas</h3>
+                <div class="space-y-3">
+                    <div class="border border-gray-200 rounded-lg p-4">
+                        <div class="flex justify-between items-start">
+                            <div>
+                                <div class="font-medium text-gray-900 mb-1">Optimizar tiempos de espera</div>
+                                <div class="text-sm text-gray-600">Implementar sistema de reservas digital</div>
+                            </div>
+                            <span class="px-3 py-1 bg-red-100 text-red-800 text-xs font-medium rounded-full">Alta</span>
+                        </div>
+                    </div>
+                    
+                    <div class="border border-gray-200 rounded-lg p-4">
+                        <div class="flex justify-between items-start">
+                            <div>
+                                <div class="font-medium text-gray-900 mb-1">Mejorar engagement</div>
+                                <div class="text-sm text-gray-600">Incrementar ratio de respuesta a 85%</div>
+                            </div>
+                            <span class="px-3 py-1 bg-yellow-100 text-yellow-800 text-xs font-medium rounded-full">Media</span>
+                        </div>
+                    </div>
+
+                    <div class="border border-gray-200 rounded-lg p-4">
+                        <div class="flex justify-between items-start">
+                            <div>
+                                <div class="font-medium text-gray-900 mb-1">Monitorizar reseñas sospechosas</div>
+                                <div class="text-sm text-gray-600">Implementar alertas automáticas</div>
+                            </div>
+                            <span class="px-3 py-1 bg-blue-100 text-blue-800 text-xs font-medium rounded-full">Baja</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <script>
+        window.addEventListener('load', function() {
+            try {
+                // Sentiment Analysis Chart
+                var sentimentData = [{
+                    values: [12, 18, 15, 35, 20],
+                    labels: ['Muy Negativo', 'Negativo', 'Neutro', 'Positivo', 'Muy Positivo'],
+                    type: 'pie',
+                    marker: {
+                        colors: ['#dc2626', '#f59e0b', '#6b7280', '#10b981', '#059669']
+                    }
+                }];
+
+                var sentimentLayout = {
+                    title: { text: '', font: { size: 14 } },
+                    margin: { t: 20, r: 20, b: 20, l: 20 },
+                    plot

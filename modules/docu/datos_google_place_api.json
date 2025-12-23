@@ -1,0 +1,504 @@
+PS D:\Proyectos_Code\Scraper_final> curl "https://maps.googleapis.com/maps/api/place/details/json?place_id=ChIJ5a3HLee9pBIRC7Bs9t4I40U&key=AIzaSyDYX267cLJE-EhdSKXo11d2jsXU_sZGnnc"
+{
+   "html_attributions" : [],
+   "result" :
+   {
+      "address_components" :
+      [
+         {
+            "long_name" : "15",
+            "short_name" : "15",
+            "types" :
+            [
+               "street_number"
+            ]
+         },
+         {
+            "long_name" : "Passeig de Valldaura",
+            "short_name" : "Pg. de Valldaura",
+            "types" :
+            [
+               "route"
+            ]
+         },
+         {
+            "long_name" : "Horta-Guinardó",
+            "short_name" : "Horta-Guinardó",
+            "types" :
+            [
+               "political",
+               "sublocality",
+               "sublocality_level_1"
+            ]
+         },
+         {
+            "long_name" : "Barcelona",
+            "short_name" : "Barcelona",
+            "types" :
+            [
+               "locality",
+               "political"
+            ]
+         },
+         {
+            "long_name" : "Barcelona",
+            "short_name" : "B",
+            "types" :
+            [
+               "administrative_area_level_2",
+               "political"
+            ]
+         },
+         {
+            "long_name" : "Catalunya",
+            "short_name" : "CT",
+            "types" :
+            [
+               "administrative_area_level_1",
+               "political"
+            ]
+         },
+         {
+            "long_name" : "Spain",
+            "short_name" : "ES",
+            "types" :
+            [
+               "country",
+               "political"
+            ]
+         },
+         {
+            "long_name" : "08031",
+            "short_name" : "08031",
+            "types" :
+            [
+               "postal_code"
+            ]
+         }
+      ],
+      "adr_address" : "\u003cspan class=\"street-address\"\u003ePg. de Valldaura, 15\u003c/span\u003e, \u003cspan class=\"extended-address\"\u003eHorta-Guinardó\u003c/span\u003e, \u003cspan class=\"postal-code\"\u003e08031\u003c/span\u003e \u003cspan class=\"locality\"\u003eBarcelona\u003c/span\u003e, \u003cspan class=\"country-name\"\u003eSpain\u003c/span\u003e",
+      "business_status" : "OPERATIONAL",
+      "current_opening_hours" :
+      {
+         "open_now" : false,
+         "periods" :
+         [
+            {
+               "close" :
+               {
+                  "date" : "2025-11-02",
+                  "day" : 0,
+                  "time" : "1800"
+               },
+               "open" :
+               {
+                  "date" : "2025-11-02",
+                  "day" : 0,
+                  "time" : "1000"
+               }
+            },
+            {
+               "close" :
+               {
+                  "date" : "2025-11-03",
+                  "day" : 1,
+                  "time" : "1800"
+               },
+               "open" :
+               {
+                  "date" : "2025-11-03",
+                  "day" : 1,
+                  "time" : "1000"
+               }
+            },
+            {
+               "close" :
+               {
+                  "date" : "2025-11-04",
+                  "day" : 2,
+                  "time" : "1800"
+               },
+               "open" :
+               {
+                  "date" : "2025-11-04",
+                  "day" : 2,
+                  "time" : "1000"
+               }
+            },
+            {
+               "close" :
+               {
+                  "date" : "2025-11-05",
+                  "day" : 3,
+                  "time" : "1800"
+               },
+               "open" :
+               {
+                  "date" : "2025-11-05",
+                  "day" : 3,
+                  "time" : "1000"
+               }
+            },
+            {
+               "close" :
+               {
+                  "date" : "2025-11-06",
+                  "day" : 4,
+                  "time" : "1800"
+               },
+               "open" :
+               {
+                  "date" : "2025-11-06",
+                  "day" : 4,
+                  "time" : "1000"
+               }
+            },
+            {
+               "close" :
+               {
+                  "date" : "2025-11-07",
+                  "day" : 5,
+                  "time" : "1800"
+               },
+               "open" :
+               {
+                  "date" : "2025-11-07",
+                  "day" : 5,
+                  "time" : "1000"
+               }
+            },
+            {
+               "close" :
+               {
+                  "date" : "2025-11-01",
+                  "day" : 6,
+                  "time" : "1800"
+               },
+               "open" :
+               {
+                  "date" : "2025-11-01",
+                  "day" : 6,
+                  "time" : "1000"
+               }
+            }
+         ],
+         "weekday_text" :
+         [
+            "Monday: 10:00 AM – 6:00 PM",
+            "Tuesday: 10:00 AM – 6:00 PM",
+            "Wednesday: 10:00 AM – 6:00 PM",
+            "Thursday: 10:00 AM – 6:00 PM",
+            "Friday: 10:00 AM – 6:00 PM",
+            "Saturday: 10:00 AM – 6:00 PM",
+            "Sunday: 10:00 AM – 6:00 PM"
+         ]
+      },
+      "formatted_address" : "Pg. de Valldaura, 15, Horta-Guinardó, 08031 Barcelona, Spain",
+      "formatted_phone_number" : "602 60 29 01",
+      "geometry" :
+      {
+         "location" :
+         {
+            "lat" : 41.4372574,
+            "lng" : 2.1553093
+         },
+         "viewport" :
+         {
+            "northeast" :
+            {
+               "lat" : 41.4386071302915,
+               "lng" : 2.156657580291502
+            },
+            "southwest" :
+            {
+               "lat" : 41.4359091697085,
+               "lng" : 2.153959619708498
+            }
+         }
+      },
+      "icon" : "https://maps.gstatic.com/mapfiles/place_api/icons/v1/png_71/lodging-71.png",
+      "icon_background_color" : "#909CE1",
+      "icon_mask_base_uri" : "https://maps.gstatic.com/mapfiles/place_api/icons/v2/hotel_pinlet",
+      "international_phone_number" : "+34 602 60 29 01",
+      "name" : "Wheels Rest",
+      "opening_hours" :
+      {
+         "open_now" : false,
+         "periods" :
+         [
+            {
+               "close" :
+               {
+                  "day" : 0,
+                  "time" : "1800"
+               },
+               "open" :
+               {
+                  "day" : 0,
+                  "time" : "1000"
+               }
+            },
+            {
+               "close" :
+               {
+                  "day" : 1,
+                  "time" : "1800"
+               },
+               "open" :
+               {
+                  "day" : 1,
+                  "time" : "1000"
+               }
+            },
+            {
+               "close" :
+               {
+                  "day" : 2,
+                  "time" : "1800"
+               },
+               "open" :
+               {
+                  "day" : 2,
+                  "time" : "1000"
+               }
+            },
+            {
+               "close" :
+               {
+                  "day" : 3,
+                  "time" : "1800"
+               },
+               "open" :
+               {
+                  "day" : 3,
+                  "time" : "1000"
+               }
+            },
+            {
+               "close" :
+               {
+                  "day" : 4,
+                  "time" : "1800"
+               },
+               "open" :
+               {
+                  "day" : 4,
+                  "time" : "1000"
+               }
+            },
+            {
+               "close" :
+               {
+                  "day" : 5,
+                  "time" : "1800"
+               },
+               "open" :
+               {
+                  "day" : 5,
+                  "time" : "1000"
+               }
+            },
+            {
+               "close" :
+               {
+                  "day" : 6,
+                  "time" : "1800"
+               },
+               "open" :
+               {
+                  "day" : 6,
+                  "time" : "1000"
+               }
+            }
+         ],
+         "weekday_text" :
+         [
+            "Monday: 10:00 AM – 6:00 PM",
+            "Tuesday: 10:00 AM – 6:00 PM",
+            "Wednesday: 10:00 AM – 6:00 PM",
+            "Thursday: 10:00 AM – 6:00 PM",
+            "Friday: 10:00 AM – 6:00 PM",
+            "Saturday: 10:00 AM – 6:00 PM",
+            "Sunday: 10:00 AM – 6:00 PM"
+         ]
+      },
+      "photos" :
+      [
+         {
+            "height" : 1728,
+            "html_attributions" :
+            [
+               "\u003ca href=\"https://maps.google.com/maps/contrib/104923826876192198363\"\u003eWheels Rest\u003c/a\u003e"
+            ],
+            "photo_reference" : "AWn5SU5GjxVUpW401-MQ-4yqB7zvRukhD4L2DAV0IC_-I4LVWjrJ81Sqb6-6t_Zo9ng9iLj2zPEgIX20jlXZcEVeu9vViV4Tyw19xE-n7VqlGt-GLkIq43I263OyMz54r682We2AREavuK4lhrkwt_P-tzXUu6Anf-XMLpmwbLLVeyNJfoMENohCZE-K7HRpJQ3BddwgdwawKP70m0OO1L_M3Qua5a8YW8J2fWvalsxtA6MbrT43H0f0GtP4Qggt68IZrYtUEeasR3R8nNXjrtwwGsVENzJ1BDFRS_FQ-LI3MWcEjA",
+            "width" : 2592
+         },
+         {
+            "height" : 1728,
+            "html_attributions" :
+            [
+               "\u003ca href=\"https://maps.google.com/maps/contrib/104923826876192198363\"\u003eWheels Rest\u003c/a\u003e"
+            ],
+            "photo_reference" : "AWn5SU6AX9Ni4jQdhqLfDJgWidJ2BSAvC45be3_DM57hR1siyGLdLRfeqM0Tg8-jSCJIqaq3UrX6jI_DNObPxjOxp6d2T45m1NC2WkoP_k30g-l_8OPcFqFG6WTBbxNGhSFdg7mBcBh6lEXtlPdcj3ggTeZXLh9ZdfV-eqfZdzsh6V-DA88RjAkk5ljedaq-ZHYE2N_i0YsbAKDVpbz-VmBAwkmCUqn3HeIzsE0F2R2MLsVDKcZsPaYtFvJj6re0rViD66ZvPNMQjbDoXE8MkhhAFiL2ZBidftWR3TxkQ1Jl10r5wQ",
+            "width" : 2592
+         },
+         {
+            "height" : 1728,
+            "html_attributions" :
+            [
+               "\u003ca href=\"https://maps.google.com/maps/contrib/104923826876192198363\"\u003eWheels Rest\u003c/a\u003e"
+            ],
+            "photo_reference" : "AWn5SU6lQ_cb4V2DOytt41z3d0EdLXVmp_8xRatFO4FixvvjwOmrPewnDlg1ow67DfS-quQY8WFLP0bNu8KJ_rzTUiifK_SlxC1pCNdq2oEY9q2wLOqMpySK8FoyS92GLR6TauWpKcPXZnbNplzPsRqi8LCm6y-Z12_wun9HhxGRLZdH3xuBCkITt6O4Lt1TELL0Xm9guh-_EQsnOtr6M_n32NfO_voqpBz0TrNgHDL1bIZczhlILbg9Bd7nt1sp_sbIv9t4TA6ncr-pHLwBAOg73kEzTBPXaFcf92WRRmjGFfQMzw",
+            "width" : 2592
+         },
+         {
+            "height" : 1728,
+            "html_attributions" :
+            [
+               "\u003ca href=\"https://maps.google.com/maps/contrib/104923826876192198363\"\u003eWheels Rest\u003c/a\u003e"
+            ],
+            "photo_reference" : "AWn5SU6SMU_mcsW6lJdzkfoWMkaYjR0Hi07ZqabkR_ma-Qk1RpPwc3yRVCaHgJj_a-u_xi6X9wIaC067RdCGFDUzeYguyWm1sDi0TDCRhzkHL9I1WXAjwq-cEMsMaKwiHrAcehoY3-AjgMPpqf0shIpUqVNanaRrir9zZe_2PuFJ6GKe-C01sLxqi-FIhEpYkjGbbvtCKplbh08nsJb2ewcahFuE1gC_bOQd3CIxGc0IHKremHwVqx3ekk7oYuhKsXpBrEplDrPCvav9vr5muCEP1kvWyZtNWAcIkqgfjnApPNM9ug",
+            "width" : 2592
+         },
+         {
+            "height" : 3024,
+            "html_attributions" :
+            [
+               "\u003ca href=\"https://maps.google.com/maps/contrib/104546638266140360829\"\u003eKlaus Noetzel\u003c/a\u003e"
+            ],
+            "photo_reference" : "AWn5SU4V-ZVR5re8jPvVN3_ZVRbYeADjWSufsXrOKPPYB_GPDjHCGDOPaJv0mLgPlKXEUkDdI2KKHbhyU1Rk0s2f9dG5-zK6kAS50FCOTP7-R777GXHofm1pRxzDSUAvB6xkkt3fuV_m8XXmZ-UFur84OZSJIyWElpWXEMJk42Km4jxhNXOKfBt_E3FiW6Av18z01vj2Q_fWF27TqJtaX-UHWvfhE7K0c8eUM9ZD8egxsRFlCFSK31NUHzMsTqRw04PuoEzzeqAWyuJn-hKvWy17OwHFaiw33dgeyuVTeQw7yNCHkmlO8b8rldH6hHsVAzQixx_yH6coXhkHda6Kf6tPmh6yTrgpviA6WPewBqNiy0l-dL35OFFx6v75YWyp7yXPq25TMpiO0qckZ8QkF1D0Dk-9U4jfWGX1eIWnEMVKIFLuHowWxt5d7SVPXPP-NYkj",
+            "width" : 4032
+         },
+         {
+            "height" : 3072,
+            "html_attributions" :
+            [
+               "\u003ca href=\"https://maps.google.com/maps/contrib/105190530036987800861\"\u003eLuigi Pietrobelli\u003c/a\u003e"
+            ],
+            "photo_reference" : "AWn5SU5hpWwcZoeHdxXI3xOsX_7L_4wL4A5jz6hEWPl2ntKdEhgK4q07SavCnzfmsbTto-Yu8mICI44u73zW8r27VhZV90KpAR1tI0AwrpGyk14RL1S_vBC6T7oXEL8Aw54snart_WUDwG8LS1ANh9YT8_cSzJ4pNAtUebEEpONnaMqK2KV37KPHaJCV-JMsfRm2Jg0PZEt85orW4JmEskrEdOxVMGTzlOp1Evm_udLqFfUQDg8I5FW5vSZ3mF8Pil50wYk7uCsPVeWPaLmXNGQydcweh2O_Sw4ko8GKaOeLH8HyAwOjPKQ_z0NU-lTlsw0XtBSzMhM36-lrvH38HhjTZClRtSBK1Bj541ltEvwA-OX8cvmsSy66EJvFgukEEsJyTOeUq7pUKPgS8m99-9rL-5ZS3T7Un6siFllmXY1QNS_TDkE5Pu7Eh1t4KW4y0Q",
+            "width" : 4096
+         },
+         {
+            "height" : 3072,
+            "html_attributions" :
+            [
+               "\u003ca href=\"https://maps.google.com/maps/contrib/105190530036987800861\"\u003eLuigi Pietrobelli\u003c/a\u003e"
+            ],
+            "photo_reference" : "AWn5SU4x-QiFOuQUimMdBvV7auKCXLHTRqEfu1PC5eg8OhPktXeJtDxn5QvxnIbNCvExJFDEKPjLFismMRee1HwpM6kTKxzftxg9cY4KD1uUGqsaj_Yap7egyRsOV-pafIxTHgSyPqypbMlpTJoSZ9msYJ_lrDCF_32gl1coCVbdsGuYOwY8yEANvHhEszBjgv3o6_Jjve0K1evJXFAphFsjZRQcGZWEAJX0ywmBDtgO6o24FtHC3CXH7usmaynz-AAyhHbwlaOjqCXQ9ncJGiOFYEbS456jTmVHqfgE01f6uQyVRlaO-u4CzSQHqrR4PCXdNDxGCitSRuIZfCMMPiEG6hU0PCRcgICT5i2Pzta3fZEyMT6ZuGCoUwgZBKa7_12Bal1kSl1HlhefYE6B7Ojm_qZp2qJbIa1Wn78cWGhBQZEG1HZRBPPyn1oBGvTC_zED",
+            "width" : 4096
+         },
+         {
+            "height" : 3024,
+            "html_attributions" :
+            [
+               "\u003ca href=\"https://maps.google.com/maps/contrib/112139774844708342083\"\u003eProtect Systems e.U.\u003c/a\u003e"
+            ],
+            "photo_reference" : "AWn5SU5QeGaorkhewXaYykh9NgXsVBhKdF4gYzgTyrMYWzhqOmtHUr8G6n7Qy4Q8hV8d2yh0GKd3k_KVvkcRSoWNf7_JYehj7i0Q_iTliY9JbdKeWmOJwFAZezV7PzRvgCPdNUKdnJZjeHY22I54sDFxuaRPla7YTI6pRX2Zo95BXoQwCfXhbztZwkndAg3BOmgVQMqbQ6bnPwLOgSG2PBNwW_dyRhLCCyxVqPaFmx8YCgF-ZfIOcTMiPquwxmEIFhEvJ32Uv3ZkK9pm9kuZB1xtJF1wmCrcd-jfGyV04E8K7xPhJSN09clg5aoUnC44AtiXEaZWXhOcPHUMeRfwOhnXTbm_qY8RPAYs6uF_dOwFmyN12rckfgRta5h_LF7YVE7uFLvR_qtRN9TtbcXLhtwQ36DtV0qcndXr9Lz2H_u3nW9MJKH7_tG7R3frQLql4A",
+            "width" : 4032
+         },
+         {
+            "height" : 4032,
+            "html_attributions" :
+            [
+               "\u003ca href=\"https://maps.google.com/maps/contrib/104546638266140360829\"\u003eKlaus Noetzel\u003c/a\u003e"
+            ],
+            "photo_reference" : "AWn5SU4vIsgZFWtiIc9tXHIBiZG7bgjhwDizpa2NPT6roeIIX-00z6hIptB07vlFOM4hVmzhl0g14v47x9ZFDb-UIWSuInW2ntsc_GNvT1TPHGihGd_0aIZI7eh9d7boIYLcL9Dy92xT9YhIxLdHse2WIXUCmwzKeAQR-Y9SHZpl81_qi5Ud0tmP3SYy2U0VjdkVhyln4bEmMFCD1XGEogF-v3uiLAbfM5oREGZtWsZbzljN310IVOuGEq6rst57DYbcutmhh4C_jSlWY6e61D49mr1M_6QSpXSrK4jwaAzkqcoo8fX58GUGcB6qgVDPc4sjXOoELD7LfUSlw_a9tWG-u3JFWkRkJnkoo9-zT5R7RZkmGcIg485OIrt9iuul4QlZf8nVEJ0jroAsKkb_NLVSQcaBIfPKwRnuQ1NcFyNqkaB92A_RTv_tlQqAck9ZuyhO",
+            "width" : 3024
+         },
+         {
+            "height" : 3024,
+            "html_attributions" :
+            [
+               "\u003ca href=\"https://maps.google.com/maps/contrib/112139774844708342083\"\u003eProtect Systems e.U.\u003c/a\u003e"
+            ],
+            "photo_reference" : "AWn5SU4_XRBbRXNH6Qr6Hg2kxf8uogfDQwMh6FQEq-Dxz0PC9V0QjwoaILZddUQNMz7SfpUFD69se2dP98MOMViDILjZvgUKgl7hJTBcIS5j-5dmTC3sYd_Qxr3ofm57SEUEiturhQaQO1-siZc2_9vS2ax9L_98ds5SVQxZ0MWf4w9-ta_a3n5lB9xYKRWceqfUOECCkGHgDbsCsUs0HKZSRq-SU4m2QBDVkgt4b88mezrtWMHFnf5UQrvXv_dlK2zP-XZyc3UvL9iWpeauZQq9JUYB0dZsJchXsrqSB3M9G7Y6E3MFi4RJo7Qy4WhBVmW1vkwjTvUI5oIIZDsBFwRTNMMnONeldif5IlaqkpUvZcUlLaR7K7JGWf6uZOlsBjlggtueae7lKUqOOv_xoMRs79DwQmn6MTGOCFIBdgR17RKKOJ0NLq1L4F3-u_4GCA",
+            "width" : 4032
+         }
+      ],
+      "place_id" : "ChIJ5a3HLee9pBIRC7Bs9t4I40U",
+      "plus_code" :
+      {
+         "compound_code" : "C5P4+W4 Barcelona, Spain",
+         "global_code" : "8FH4C5P4+W4"
+      },
+      "rating" : 4.8,
+      "reference" : "ChIJ5a3HLee9pBIRC7Bs9t4I40U",
+      "reviews" :
+      [
+         {
+            "author_name" : "Lucia Fortwengel",
+            "author_url" : "https://www.google.com/maps/contrib/111695438607543124709/reviews",
+            "language" : "en",
+            "original_language" : "en",
+            "profile_photo_url" : "https://lh3.googleusercontent.com/a/ACg8ocJ9ERYdTT2SEhj4MdUDMdo1YUTdDjvl6oNF3TlJJUEGp5WnoUl6=s128-c0x00000000-cc-rp-mo",
+            "rating" : 5,
+            "relative_time_description" : "2 months ago",
+            "text" : "Convenient parking lot with electricity and clean toilets. The area is fenced and has staff on site, which made us feel safe and comfortable during our 2-night stay. Great location, just a short walk to the metro! Staff were very friendly.",
+            "time" : 1756724388,
+            "translated" : false
+         },
+         {
+            "author_name" : "Philipp Baumgartner",
+            "author_url" : "https://www.google.com/maps/contrib/114207863096807482508/reviews",
+            "language" : "en",
+            "original_language" : "en",
+            "profile_photo_url" : "https://lh3.googleusercontent.com/a/ACg8ocJTTqrKGDPdqYo47WJmNOz39nw5BZCHDgLxeiH6ujsHtE93yRw=s128-c0x00000000-cc-rp-mo-ba2",
+            "rating" : 5,
+            "relative_time_description" : "a month ago",
+            "text" : "Very good experience at Wheels Rest. The parking is comfortable, safe, and very clean, but what makes it special is the attention from the people who work there. They helped us with everything, even with things not related to the parking itself. They recommended an app to get around by electric scooter and suggested a couple of tapas bars where we ate wonderfully",
+            "time" : 1757316002,
+            "translated" : false
+         },
+         {
+            "author_name" : "Tobias Schenk",
+            "author_url" : "https://www.google.com/maps/contrib/111642166656028188634/reviews",
+            "language" : "en",
+            "original_language" : "en",
+            "profile_photo_url" : "https://lh3.googleusercontent.com/a/ACg8ocJe9fDhSRWQvcQrczHWE5L8JadTI-Ivo_3uVMOq2WASEPByTw=s128-c0x00000000-cc-rp-mo-ba2",
+            "rating" : 5,
+            "relative_time_description" : "a month ago",
+            "text" : "A very good option in Barcelona. The place is fenced, quiet, and above all, very clean. It’s really appreciated to arrive at such a spot after a day of traveling.",
+            "time" : 1757921611,
+            "translated" : false
+         },
+         {
+            "author_name" : "Markus B.",
+            "author_url" : "https://www.google.com/maps/contrib/107720262635335562752/reviews",
+            "language" : "en",
+            "original_language" : "en",
+            "profile_photo_url" : "https://lh3.googleusercontent.com/a/ACg8ocKbst_W8Bd2xXoD5wv-WUwnfZqIqJYUhLwqC5vvocU0ldPJ0g=s128-c0x00000000-cc-rp-mo-ba2",
+            "rating" : 5,
+            "relative_time_description" : "a month ago",
+            "text" : "Perfect for resting and visiting Barcelona. Having the metro right next door makes everything easier, but what really surprised us was the amount of time the staff spent giving us great tips on what to visit, the best times to go, where to eat, etc. Highly recommended.",
+            "time" : 1758026313,
+            "translated" : false
+         },
+         {
+            "author_name" : "Laura Franke",
+            "author_url" : "https://www.google.com/maps/contrib/110140868658006339367/reviews",
+            "language" : "en",
+            "original_language" : "en",
+            "profile_photo_url" : "https://lh3.googleusercontent.com/a/ACg8ocKo71rISqYE39OLJfo9KNJvxYt6RoTjduI-eUXM-HQwQjqe1g=s128-c0x00000000-cc-rp-mo",
+            "rating" : 5,
+            "relative_time_description" : "a month ago",
+            "text" : "We loved the place. Parking a van inside Barcelona is usually complicated and unsafe, but here we felt at ease from the very first minute.",
+            "time" : 1757841472,
+            "translated" : false
+         }
+      ],
+      "types" :
+      [
+         "establishment",
+         "lodging",
+         "point_of_interest",
+         "rv_park"
+      ],
+      "url" : "https://maps.google.com/?cid=5035878562040426507",
+      "user_ratings_total" : 31,
+      "utc_offset" : 60,
+      "vicinity" : "Pg. de Valldaura, 15, Barcelona",
+      "website" : "https://www.wheelsrest.com/"
+   },
+   "status" : "OK"
+}
+PS D:\Proyectos_Code\Scraper_final>

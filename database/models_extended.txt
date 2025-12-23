@@ -1,0 +1,855 @@
+"""
+Database Models - SQLAlchemy ORM Definitions
+
+This module defines all database tables and relationships for the analytics pipeline.
+Supports both SQLite (development) and PostgreSQL (production).
+
+Tables:
+- places: Restaurant/business metadata
+- reviews: Individual review records
+- owner_responses: Owner responses to reviews
+- kpi_summary: Aggregated KPIs by period
+- analysis_cache: Performance caching layer
+"""
+
+from datetime import datetime, timedelta
+from decimal import Decimal
+from typing import Optional, List
+from enum import Enum
+
+from sqlalchemy import (
+    Column, String, Integer, Float, Text, DateTime, 
+    ForeignKey, Boolean, JSON, Index, UniqueConstraint,
+    create_engine, event
+)
+from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.orm import relationship, Session
+from sqlalchemy.pool import StaticPool
+
+Base = declarative_base()
+
+
+class Places(Base):
+    """
+    Tabla de locales/negocios.
+    
+    Almacena información general del negocio scrapeado.
+    Relación 1:N con Reviews y OwnerResponses.
+    """
+    __tablename__ = "places"
+    __table_args__ = (
+        Index('idx_place_id_unique', 'place_id', unique=True),
+        Index('idx_name_location', 'name', 'location'),
+    )
+    
+    id = Column(String(50), primary_key=True)
+    place_id = Column(String(255), unique=True, nullable=False, index=True)
+    name = Column(String(255), nullable=False, index=True)
+    location = Column(String(500), nullable=True)
+    url = Column(Text, nullable=True)
+    phone = Column(String(20), nullable=True)
+    
+    # Rating aggregado
+    rating = Column(Float, nullable=True, default=0.0)
+    total_reviews = Column(Integer, nullable=True, default=0)
+    
+    # Metadata
+    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
+    last_scraped = Column(DateTime, nullable=True)
+    
+    # Relaciones
+    reviews: List['Reviews'] = relationship(
+        'Reviews', 
+        back_populates='place',
+        cascade='all, delete-orphan',
+        lazy='select'
+    )
+    kpi_summaries: List['KPISummary'] = relationship(
+        'KPISummary',
+        back_populates='place',
+        cascade='all, delete-orphan',
+        lazy='select'
+    )
+    
+    def __repr__(self) -> str:
+        return f"<Place(id='{self.id}', name='{self.name}', rating={self.rating})>"
+    
+    def to_dict(self) -> dict:
+        """Convertir objeto a diccionario."""
+        return {
+            'id': self.id,
+            'place_id': self.place_id,
+            'name': self.name,
+            'location': self.location,
+            'url': self.url,
+            'phone': self.phone,
+            'rating': self.rating,
+            'total_reviews': self.total_reviews,
+            'created_at': self.created_at.isoformat(),
+            'updated_at': self.updated_at.isoformat(),
+            'last_scraped': self.last_scraped.isoformat() if self.last_scraped else None
+        }
+
+
+class Reviews(Base):
+    """
+    Tabla de reseñas individuales.
+    
+    Almacena cada reseña scrapeada con su metadata y análisis.
+    Relación N:1 con Places.
+    Relación 1:1 con OwnerResponses (opcional).
+    """
+    __tablename__ = "reviews"
+    __table_args__ = (
+        Index('idx_review_place', 'place_id'),
+        Index('idx_review_date', 'review_date'),
+        Index('idx_review_rating', 'rating'),
+        Index('idx_review_sentiment', 'sentiment_score'),
+        Index('idx_place_date', 'place_id', 'review_date'),
+    )
+    
+    id = Column(String(50), primary_key=True)
+    place_id = Column(String(255), ForeignKey('places.place_id', ondelete='CASCADE'), nullable=False, index=True)
+    
+    # Información de la reseña
+    reviewer_name = Column(String(255), nullable=True)
+    reviewer_id = Column(String(255), nullable=True)
+    rating = Column(Integer, nullable=False)  # 1-5
+    title = Column(String(500), nullable=True)
+    text = Column(Text, nullable=False)
+    
+    # Análisis de texto
+    sentiment_score = Column(Float, nullable=True)  # -1.0 a 1.0
+    topics = Column(JSON, nullable=True)  # Lista de tópicos detectados
+    keywords = Column(JSON, nullable=True)  # Palabras clave extraídas
+    
+    # Metadata temporal
+    review_date = Column(DateTime, nullable=False, index=True)
+    scraped_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+    
+    # Flags de anomalía
+    is_anomaly = Column(Boolean, default=False, nullable=False)
+    anomaly_type = Column(String(50), nullable=True)  # 'fake', 'extreme', 'spam'
+    anomaly_score = Column(Float, nullable=True)  # 0-1
+    
+    # Relaciones
+    place: 'Places' = relationship('Places', back_populates='reviews')
+    owner_response: Optional['OwnerResponses'] = relationship(
+        'OwnerResponses',
+        back_populates='review',
+        uselist=False,
+        cascade='all, delete-orphan'
+    )
+    
+    def __repr__(self) -> str:
+        return f"<Review(id='{self.id}', rating={self.rating}, sentiment={self.sentiment_score})>"
+    
+    def to_dict(self) -> dict:
+        """Convertir objeto a diccionario."""
+        return {
+            'id': self.id,
+            'place_id': self.place_id,
+            'reviewer_name': self.reviewer_name,
+            'rating': self.rating,
+            'title': self.title,
+            'text': self.text,
+            'sentiment_score': self.sentiment_score,
+            'topics': self.topics,
+            'review_date': self.review_date.isoformat(),
+            'is_anomaly': self.is_anomaly,
+            'anomaly_type': self.anomaly_type,
+            'anomaly_score': self.anomaly_score
+        }
+
+
+class OwnerResponses(Base):
+    """
+    Tabla de respuestas del propietario.
+    
+    Almacena las respuestas del dueño a cada reseña.
+    Relación N:1 con Reviews.
+    """
+    __tablename__ = "owner_responses"
+    __table_args__ = (
+        Index('idx_response_review', 'review_id'),
+        Index('idx_response_date', 'response_date'),
+    )
+    
+    id = Column(String(50), primary_key=True)
+    review_id = Column(String(50), ForeignKey('reviews.id', ondelete='CASCADE'), nullable=False, index=True, unique=True)
+    
+    # Texto de respuesta
+    text = Column(Text, nullable=False)
+    sentiment_score = Column(Float, nullable=True)  # -1.0 a 1.0
+    
+    # Análisis temporal
+    response_date = Column(DateTime, nullable=False, index=True)
+    response_time_hours = Column(Integer, nullable=True)  # Horas hasta responder
+    
+    # Metadata
+    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+    
+    # Relación
+    review: 'Reviews' = relationship('Reviews', back_populates='owner_response')
+    
+    def __repr__(self) -> str:
+        return f"<OwnerResponse(id='{self.id}', sentiment={self.sentiment_score})>"
+    
+    def to_dict(self) -> dict:
+        """Convertir objeto a diccionario."""
+        return {
+            'id': self.id,
+            'review_id': self.review_id,
+            'text': self.text,
+            'sentiment_score': self.sentiment_score,
+            'response_time_hours': self.response_time_hours,
+            'response_date': self.response_date.isoformat()
+        }
+
+
+class KPISummary(Base):
+    """
+    Tabla de resúmenes KPI.
+    
+    Almacena KPIs agregados por local y período.
+    Tabla desnormalizada para optimizar queries de lectura.
+    """
+    __tablename__ = "kpi_summary"
+    __table_args__ = (
+        Index('idx_kpi_place', 'place_id'),
+        Index('idx_kpi_period', 'period_start', 'period_end'),
+        Index('idx_kpi_place_period', 'place_id', 'period_start'),
+        UniqueConstraint('place_id', 'period_start', 'period_end', name='unique_kpi_period'),
+    )
+    
+    id = Column(String(50), primary_key=True)
+    place_id = Column(String(255), ForeignKey('places.place_id', ondelete='CASCADE'), nullable=False, index=True)
+    
+    # Período del análisis
+    period_start = Column(DateTime, nullable=False)
+    period_end = Column(DateTime, nullable=False)
+    
+    # KPIs básicos
+    avg_rating = Column(Float, nullable=True)  # Promedio de rating
+    total_reviews = Column(Integer, nullable=True)  # Cantidad total
+    new_reviews_count = Column(Integer, nullable=True)  # Nuevas en el período
+    
+    # Análisis de respuestas
+    owner_response_count = Column(Integer, nullable=True)  # Respuestas totales
+    response_rate = Column(Float, nullable=True)  # Porcentaje respondidas
+    avg_response_time_hours = Column(Integer, nullable=True)  # Tiempo promedio respuesta
+    
+    # Análisis de sentimiento
+    avg_sentiment = Column(Float, nullable=True)  # Sentimiento promedio
+    positive_count = Column(Integer, nullable=True)  # Reseñas positivas
+    neutral_count = Column(Integer, nullable=True)  # Reseñas neutrales
+    negative_count = Column(Integer, nullable=True)  # Reseñas negativas
+    
+    # Análisis temporal
+    trend_direction = Column(String(20), nullable=True)  # 'UP', 'DOWN', 'STABLE'
+    trend_value = Column(Float, nullable=True)  # Cambio en rating
+    week_over_week_growth = Column(Float, nullable=True)  # Crecimiento WoW
+    
+    # Análisis de anomalías
+    anomaly_count = Column(Integer, nullable=True)  # Reseñas anómalas detectadas
+    anomaly_rate = Column(Float, nullable=True)  # Porcentaje de anomalías
+    
+    # Metadata
+    calculated_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+    valid_until = Column(DateTime, nullable=True)  # Cache expiration
+    
+    # Relación
+    place: 'Places' = relationship('Places', back_populates='kpi_summaries')
+    
+    def __repr__(self) -> str:
+        return f"<KPISummary(place_id='{self.place_id}', period={self.period_start.date()})>"
+    
+    def to_dict(self) -> dict:
+        """Convertir objeto a diccionario."""
+        return {
+            'id': self.id,
+            'place_id': self.place_id,
+            'period_start': self.period_start.isoformat(),
+            'period_end': self.period_end.isoformat(),
+            'avg_rating': self.avg_rating,
+            'total_reviews': self.total_reviews,
+            'new_reviews_count': self.new_reviews_count,
+            'owner_response_count': self.owner_response_count,
+            'response_rate': self.response_rate,
+            'avg_sentiment': self.avg_sentiment,
+            'positive_count': self.positive_count,
+            'negative_count': self.negative_count,
+            'trend_direction': self.trend_direction,
+            'trend_value': self.trend_value,
+            'anomaly_count': self.anomaly_count,
+            'anomaly_rate': self.anomaly_rate
+        }
+
+
+class AnalysisCache(Base):
+    """
+    Tabla de caché para análisis.
+    
+    Almacena resultados de análisis para evitar recalcular.
+    Soporta invalidación automática por TTL.
+    """
+    __tablename__ = "analysis_cache"
+    __table_args__ = (
+        Index('idx_cache_place', 'place_id'),
+        Index('idx_cache_query_type', 'query_type'),
+        Index('idx_cache_expires', 'expires_at'),
+    )
+    
+    id = Column(String(50), primary_key=True)
+    place_id = Column(String(255), ForeignKey('places.place_id', ondelete='CASCADE'), nullable=False, index=True)
+    
+    # Tipo de query
+    query_type = Column(String(100), nullable=False)  # 'kpis', 'sentiment', 'trends'
+    
+    # Datos cacheados
+    result_json = Column(JSON, nullable=False)
+    
+    # Control de cache
+    cached_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+    expires_at = Column(DateTime, nullable=False, index=True)
+    
+    def is_expired(self) -> bool:
+        """Verificar si el cache ha expirado."""
+        return datetime.utcnow() > self.expires_at
+    
+    def __repr__(self) -> str:
+        return f"<AnalysisCache(place_id='{self.place_id}', type='{self.query_type}')>"
+
+
+# ============================================================================
+# Database Configuration
+
+
+class NLPAnalysisResults(Base):
+    """"""
+    Tabla de resultados de análisis NLP avanzado.
+
+    Almacena análisis de sentimiento, contexto y tono para cada reseña.
+    Relación N:1 con Reviews.
+    Permite tracking histórico de evolución de análisis.
+    """"""
+    __tablename__ = "nlp_analysis_results"
+    __table_args__ = (
+        Index('idx_nlp_review', 'review_id'),
+        Index('idx_nlp_place_latest', 'place_id', 'is_latest'),
+        Index('idx_nlp_sentiment', 'sentiment_score'),
+        Index('idx_nlp_context', 'primary_context'),
+        Index('idx_nlp_language', 'language_detected'),
+        Index('idx_nlp_created', 'created_at'),
+    )
+
+    id = Column(String(50), primary_key=True)
+    review_id = Column(String(50), ForeignKey('reviews.id', ondelete='CASCADE'), nullable=False, index=True)
+    
+    # Detección de idioma
+    language_detected = Column(String(10), nullable=False, default='es')  # ISO 639-1 code
+    
+    # Análisis de sentimiento
+    sentiment_score = Column(Float, nullable=False)  # -1.0 a 1.0
+    sentiment_label = Column(String(50), nullable=True)  # very_negative, negative, neutral, positive, very_positive
+    sentiment_confidence = Column(Float, nullable=True)  # 0.0 a 1.0
+    keywords_detected = Column(JSON, nullable=True)  # Array of detected sentiment keywords
+    
+    # Clasificación de contexto
+    primary_context = Column(String(50), nullable=False, index=True)  # service, food, ambiance, price, cleanliness, location, general
+    context_score = Column(Float, nullable=True)  # 0.0 a 1.0
+    secondary_contexts = Column(JSON, nullable=True)  # Array of [context, score] tuples
+    context_reasoning = Column(Text, nullable=True)  # Why this context was selected
+    
+    # Análisis de tono de respuesta (si existe respuesta)
+    tone_type = Column(String(50), nullable=True)  # professional, empathetic, dismissive, defensive
+    tone_score = Column(Float, nullable=True)  # 0.0 a 1.0
+    professionalism_score = Column(Float, nullable=True)  # 0.0 a 1.0
+    empathy_score = Column(Float, nullable=True)  # 0.0 a 1.0
+    
+    # Metadata
+    created_at = Column(DateTime, default=datetime.utcnow, nullable=False, index=True)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
+    is_latest = Column(Boolean, default=True, nullable=False)  # Flag para versión más reciente
+    model_version = Column(String(20), nullable=True)  # NLP engine version used
+    
+    def __repr__(self) -> str:
+        return f"<NLPAnalysisResults(review_id='{self.review_id}', sentiment={self.sentiment_score}, context='{self.primary_context}')>"
+    
+    def to_dict(self) -> dict:
+        """Convertir objeto a diccionario."""
+        return {
+            'id': self.id,
+            'review_id': self.review_id,
+            'language_detected': self.language_detected,
+            'sentiment_score': self.sentiment_score,
+            'sentiment_label': self.sentiment_label,
+            'sentiment_confidence': self.sentiment_confidence,
+            'keywords_detected': self.keywords_detected,
+            'primary_context': self.primary_context,
+            'context_score': self.context_score,
+            'secondary_contexts': self.secondary_contexts,
+            'tone_type': self.tone_type,
+            'tone_score': self.tone_score,
+            'professionalism_score': self.professionalism_score,
+            'empathy_score': self.empathy_score,
+            'created_at': self.created_at.isoformat(),
+            'is_latest': self.is_latest,
+            'model_version': self.model_version
+        }
+
+
+class Predictions(Base):
+    """"""
+    Tabla de predicciones analíticas.
+
+    Almacena pronósticos de rating, volumen, sentimiento, anomalías y tendencias.
+    Relación N:1 con Places.
+    Ventana rolling de 12 meses.
+    """"""
+    __tablename__ = "predictions"
+    __table_args__ = (
+        Index('idx_pred_place', 'place_id'),
+        Index('idx_pred_type', 'prediction_type'),
+        Index('idx_pred_date', 'valid_from', 'valid_until'),
+        Index('idx_pred_place_type', 'place_id', 'prediction_type'),
+    )
+
+    id = Column(String(50), primary_key=True)
+    place_id = Column(String(255), ForeignKey('places.place_id', ondelete='CASCADE'), nullable=False, index=True)
+    
+    # Tipo de predicción
+    prediction_type = Column(String(50), nullable=False)  # rating_forecast, volume_forecast, sentiment_forecast
+    
+    # Fechas del pronóstico
+    forecast_start_date = Column(DateTime, nullable=False)
+    forecast_end_date = Column(DateTime, nullable=False)
+    forecast_period_days = Column(Integer, nullable=True)  # Usually 28 for 4-week forecast
+    
+    # Pronóstico de rating
+    predicted_rating = Column(Float, nullable=True)  # 1.0 a 5.0
+    forecast_confidence_lower = Column(Float, nullable=True)  # 95% CI lower bound
+    forecast_confidence_upper = Column(Float, nullable=True)  # 95% CI upper bound
+    forecast_method = Column(String(50), nullable=True)  # exponential_smoothing, etc
+    
+    # Pronóstico de volumen
+    predicted_volume = Column(Integer, nullable=True)  # Expected reviews count
+    
+    # Pronóstico de sentimiento
+    predicted_sentiment = Column(Float, nullable=True)  # -1.0 a 1.0
+    
+    # Detección de anomalías
+    is_anomaly = Column(Boolean, default=False, nullable=False)
+    anomaly_types = Column(JSON, nullable=True)  # Array of anomaly types detected
+    anomaly_scores = Column(JSON, nullable=True)  # {anomaly_type: score}
+    anomaly_reasoning = Column(Text, nullable=True)
+    
+    # Análisis de tendencia
+    trend_direction = Column(String(20), nullable=True)  # up, down, stable
+    trend_strength = Column(Float, nullable=True)  # 0.0 a 1.0
+    trend_p_value = Column(Float, nullable=True)  # Statistical significance
+    
+    # Metadata y validez
+    calculated_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+    valid_from = Column(DateTime, nullable=False, index=True)
+    valid_until = Column(DateTime, nullable=True)  # Expiration date for forecast
+    model_version = Column(String(20), nullable=True)
+    
+    def __repr__(self) -> str:
+        return f"<Predictions(place_id='{self.place_id}', type='{self.prediction_type}', rating={self.predicted_rating})>"
+    
+    def to_dict(self) -> dict:
+        """Convertir objeto a diccionario."""
+        return {
+            'id': self.id,
+            'place_id': self.place_id,
+            'prediction_type': self.prediction_type,
+            'forecast_start_date': self.forecast_start_date.isoformat(),
+            'forecast_end_date': self.forecast_end_date.isoformat(),
+            'predicted_rating': self.predicted_rating,
+            'forecast_confidence_lower': self.forecast_confidence_lower,
+            'forecast_confidence_upper': self.forecast_confidence_upper,
+            'predicted_volume': self.predicted_volume,
+            'predicted_sentiment': self.predicted_sentiment,
+            'is_anomaly': self.is_anomaly,
+            'anomaly_types': self.anomaly_types,
+            'trend_direction': self.trend_direction,
+            'trend_strength': self.trend_strength,
+            'calculated_at': self.calculated_at.isoformat(),
+            'valid_from': self.valid_from.isoformat(),
+            'valid_until': self.valid_until.isoformat() if self.valid_until else None
+        }
+
+
+class CorrelationAnalysis(Base):
+    """"""
+    Tabla de análisis de correlaciones y factores.
+
+    Almacena análisis de factores que influyen en ratings, impacto de respuestas,
+    correlaciones sentimiento-respuesta e impacto de contextos.
+    Relación N:1 con Places.
+    """"""
+    __tablename__ = "correlation_analysis"
+    __table_args__ = (
+        Index('idx_corr_place', 'place_id'),
+        Index('idx_corr_type', 'analysis_type'),
+        Index('idx_corr_date', 'calculated_at'),
+    )
+
+    id = Column(String(50), primary_key=True)
+    place_id = Column(String(255), ForeignKey('places.place_id', ondelete='CASCADE'), nullable=False, index=True)
+    
+    # Tipo de análisis
+    analysis_type = Column(String(50), nullable=False)  # factor_drivers, owner_impact, sentiment_response_correlation, context_impact
+    
+    # Factores principales (top drivers)
+    ranked_factors = Column(JSON, nullable=True)  # Array of {factor, correlation, p_value, reviews_count}
+    
+    # Impacto de respuestas del propietario
+    avg_rating_with_response = Column(Float, nullable=True)
+    avg_rating_without_response = Column(Float, nullable=True)
+    response_impact_score = Column(Float, nullable=True)
+    response_impact_details = Column(JSON, nullable=True)  # Complex nested data
+    
+    # Correlación sentimiento-respuesta
+    negative_to_positive_conversion_rate = Column(Float, nullable=True)
+    neutral_reviews_affected = Column(Integer, nullable=True)
+    positive_reviews_affected = Column(Integer, nullable=True)
+    correlation_strength = Column(Float, nullable=True)  # 0.0 a 1.0
+    
+    # Impacto basado en contexto
+    top_contexts_by_impact = Column(JSON, nullable=True)  # Array of {context, avg_impact, review_count}
+    
+    # Estadísticas
+    sample_size = Column(Integer, nullable=True)
+    confidence_level = Column(Float, nullable=True, default=0.95)
+    analysis_period_days = Column(Integer, nullable=True)
+    
+    # Metadata
+    calculated_at = Column(DateTime, default=datetime.utcnow, nullable=False, index=True)
+    valid_from = Column(DateTime, nullable=False)
+    valid_until = Column(DateTime, nullable=True)
+    model_version = Column(String(20), nullable=True)
+    
+    def __repr__(self) -> str:
+        return f"<CorrelationAnalysis(place_id='{self.place_id}', type='{self.analysis_type}')>"
+    
+    def to_dict(self) -> dict:
+        """Convertir objeto a diccionario."""
+        return {
+            'id': self.id,
+            'place_id': self.place_id,
+            'analysis_type': self.analysis_type,
+            'ranked_factors': self.ranked_factors,
+            'avg_rating_with_response': self.avg_rating_with_response,
+            'avg_rating_without_response': self.avg_rating_without_response,
+            'response_impact_score': self.response_impact_score,
+            'negative_to_positive_conversion_rate': self.negative_to_positive_conversion_rate,
+            'correlation_strength': self.correlation_strength,
+            'top_contexts_by_impact': self.top_contexts_by_impact,
+            'sample_size': self.sample_size,
+            'confidence_level': self.confidence_level,
+            'calculated_at': self.calculated_at.isoformat(),
+            'valid_from': self.valid_from.isoformat(),
+            'valid_until': self.valid_until.isoformat() if self.valid_until else None
+        }
+
+
+class PlaceClusters(Base):
+    """"""
+    Tabla de asignaciones de clusters y perfiles de lugares.
+
+    Almacena resultados de clustering K-Means (5 perfiles de lugares),
+    movimientos de cluster, y patrones de comportamiento detectados.
+    Relación N:1 con Places.
+    Mantiene histórico de cambios de cluster (snapshots mensuales).
+    """"""
+    __tablename__ = "place_clusters"
+    __table_args__ = (
+        Index('idx_cluster_place', 'place_id'),
+        Index('idx_cluster_id', 'cluster_id'),
+        Index('idx_cluster_label', 'cluster_label'),
+        Index('idx_cluster_date', 'calculated_at'),
+    )
+
+    id = Column(String(50), primary_key=True)
+    place_id = Column(String(255), ForeignKey('places.place_id', ondelete='CASCADE'), nullable=False, index=True)
+    
+    # Asignación de cluster
+    cluster_id = Column(Integer, nullable=False)  # 0-4 representing 5 profiles
+    cluster_label = Column(String(50), nullable=False)  # Premium, Good, Standard, In Recovery, Struggling
+    cluster_score = Column(Float, nullable=True)  # Distance to cluster center (lower is better)
+    
+    # Perfil del cluster
+    cluster_profile = Column(JSON, nullable=True)  # Complex profile data with characteristics
+    
+    # Movimiento de cluster
+    previous_cluster_id = Column(Integer, nullable=True)
+    cluster_movement = Column(String(50), nullable=True)  # stable, promoted, demoted, volatile
+    movement_score = Column(Float, nullable=True)  # Magnitude of change
+    
+    # Patrones de comportamiento detectados
+    detected_patterns = Column(JSON, nullable=True)  # Array of {pattern, frequency, sentiment_impact, recommendation}
+    
+    # Metadata
+    calculated_at = Column(DateTime, default=datetime.utcnow, nullable=False, index=True)
+    valid_from = Column(DateTime, nullable=False)
+    clustering_period = Column(String(100), nullable=True)  # e.g., "2025-02-01 to 2025-02-28"
+    model_version = Column(String(20), nullable=True)
+    
+    def __repr__(self) -> str:
+        return f"<PlaceClusters(place_id='{self.place_id}', cluster='{self.cluster_label}', movement='{self.cluster_movement}')>"
+    
+    def to_dict(self) -> dict:
+        """Convertir objeto a diccionario."""
+        return {
+            'id': self.id,
+            'place_id': self.place_id,
+            'cluster_id': self.cluster_id,
+            'cluster_label': self.cluster_label,
+            'cluster_score': self.cluster_score,
+            'cluster_profile': self.cluster_profile,
+            'previous_cluster_id': self.previous_cluster_id,
+            'cluster_movement': self.cluster_movement,
+            'movement_score': self.movement_score,
+            'detected_patterns': self.detected_patterns,
+            'calculated_at': self.calculated_at.isoformat(),
+            'valid_from': self.valid_from.isoformat(),
+            'clustering_period': self.clustering_period
+        }
+
+
+class ReviewPatterns(Base):
+    """"""
+    Tabla de patrones detectados en contenido y comportamiento de reseñas.
+
+    Almacena patrones recurrentes (tendencias, cíclicos, estacionales, etc)
+    con recomendaciones para mejorar. Relación N:1 con Places.
+    Mantiene histórico para tracking de evolución de patrones.
+    """"""
+    __tablename__ = "review_patterns"
+    __table_args__ = (
+        Index('idx_pattern_place', 'place_id'),
+        Index('idx_pattern_type', 'pattern_type'),
+        Index('idx_pattern_active', 'is_active'),
+    )
+
+    id = Column(String(50), primary_key=True)
+    place_id = Column(String(255), ForeignKey('places.place_id', ondelete='CASCADE'), nullable=False, index=True)
+    
+    # Tipo y descripción del patrón
+    pattern_type = Column(String(50), nullable=False)  # positive_trend, negative_trend, cyclical, seasonal, spam_like
+    pattern_name = Column(String(100), nullable=False)
+    pattern_description = Column(Text, nullable=True)
+    
+    # Intensidad y frecuencia
+    frequency = Column(Float, nullable=True)  # 0.0 a 1.0 - how often this pattern occurs
+    sentiment_correlation = Column(Float, nullable=True)  # How this pattern affects sentiment
+    review_count_in_pattern = Column(Integer, nullable=True)
+    
+    # Detalles del patrón
+    affected_contexts = Column(JSON, nullable=True)  # Array of contexts where pattern occurs
+    affected_ratings = Column(JSON, nullable=True)  # Rating distribution within pattern
+    temporal_info = Column(JSON, nullable=True)  # {day_of_week, time_of_day, seasonality}
+    
+    # Recomendaciones
+    recommended_action = Column(Text, nullable=True)
+    action_priority = Column(String(20), nullable=True)  # high, medium, low
+    expected_impact = Column(Float, nullable=True)  # Potential improvement (0.0 a 1.0)
+    
+    # Metadata
+    detected_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+    valid_from = Column(DateTime, nullable=False)
+    is_active = Column(Boolean, default=True, nullable=False, index=True)
+    persistence_weeks = Column(Integer, nullable=True)  # How long pattern has existed
+    model_version = Column(String(20), nullable=True)
+    
+    def __repr__(self) -> str:
+        return f"<ReviewPatterns(place_id='{self.place_id}', type='{self.pattern_type}', active={self.is_active})>"
+    
+    def to_dict(self) -> dict:
+        """Convertir objeto a diccionario."""
+        return {
+            'id': self.id,
+            'place_id': self.place_id,
+            'pattern_type': self.pattern_type,
+            'pattern_name': self.pattern_name,
+            'pattern_description': self.pattern_description,
+            'frequency': self.frequency,
+            'sentiment_correlation': self.sentiment_correlation,
+            'review_count_in_pattern': self.review_count_in_pattern,
+            'affected_contexts': self.affected_contexts,
+            'affected_ratings': self.affected_ratings,
+            'recommended_action': self.recommended_action,
+            'action_priority': self.action_priority,
+            'expected_impact': self.expected_impact,
+            'detected_at': self.detected_at.isoformat(),
+            'valid_from': self.valid_from.isoformat(),
+            'is_active': self.is_active,
+            'persistence_weeks': self.persistence_weeks
+        }
+
+
+class AnalyticsRuns(Base):
+    """"""
+    Tabla de historial de ejecuciones del pipeline de análisis.
+
+    Almacena información de cada ejecución del pipeline (estado, duración,
+    resultados, errores). Audit trail completo de procesamiento.
+    Relación N:1 con Places (opcional - puede ser para múltiples places).
+    """"""
+    __tablename__ = "analytics_runs"
+    __table_args__ = (
+        Index('idx_runs_place', 'place_id'),
+        Index('idx_runs_status', 'status'),
+        Index('idx_runs_date', 'started_at'),
+    )
+
+    id = Column(String(50), primary_key=True)
+    place_id = Column(String(255), ForeignKey('places.place_id', ondelete='CASCADE'), nullable=True, index=True)  # Nullable for full-system runs
+    
+    # Tipo y configuración de ejecución
+    run_type = Column(String(50), nullable=False)  # full_pipeline, nlp_only, predictions_only, etc
+    
+    # Información temporal
+    started_at = Column(DateTime, default=datetime.utcnow, nullable=False, index=True)
+    completed_at = Column(DateTime, nullable=True)
+    duration_seconds = Column(Float, nullable=True)
+    
+    # Estado de ejecución
+    status = Column(String(50), nullable=False, default='pending')  # pending, running, completed, failed, partial
+    
+    # Resultados del procesamiento
+    reviews_processed = Column(Integer, nullable=True)
+    nlp_results_generated = Column(Integer, nullable=True)
+    predictions_generated = Column(Integer, nullable=True)
+    correlations_generated = Column(Integer, nullable=True)
+    clusters_updated = Column(Boolean, nullable=True)
+    
+    # Información de errores
+    error_message = Column(Text, nullable=True)
+    error_type = Column(String(100), nullable=True)
+    error_context = Column(JSON, nullable=True)  # Additional error details
+    
+    # Versiones de componentes
+    engine_versions = Column(JSON, nullable=True)  # {advanced_nlp: version, ...}
+    
+    # Metadata
+    triggered_by = Column(String(50), nullable=True, default='manual')  # manual, scheduled, api
+    
+    def __repr__(self) -> str:
+        return f"<AnalyticsRuns(run_type='{self.run_type}', status='{self.status}', duration={self.duration_seconds}s)>"
+    
+    def to_dict(self) -> dict:
+        """Convertir objeto a diccionario."""
+        return {
+            'id': self.id,
+            'place_id': self.place_id,
+            'run_type': self.run_type,
+            'started_at': self.started_at.isoformat(),
+            'completed_at': self.completed_at.isoformat() if self.completed_at else None,
+            'duration_seconds': self.duration_seconds,
+            'status': self.status,
+            'reviews_processed': self.reviews_processed,
+            'nlp_results_generated': self.nlp_results_generated,
+            'predictions_generated': self.predictions_generated,
+            'clusters_updated': self.clusters_updated,
+            'error_message': self.error_message,
+            'error_type': self.error_type,
+            'triggered_by': self.triggered_by
+        }
+
+# ============================================================================
+
+def get_database_url(env: str = 'sqlite') -> str:
+    """
+    Obtener URL de conexión a base de datos según ambiente.
+    
+    Args:
+        env: Tipo de ambiente ('sqlite', 'postgresql')
+    
+    Returns:
+        URL de conexión
+    """
+    import os
+    from dotenv import load_dotenv
+    
+    load_dotenv()
+    
+    db_url = os.getenv('DATABASE_URL')
+    if db_url:
+        return db_url
+    
+    if env == 'sqlite':
+        return 'sqlite:///./data/analytics.db'
+    elif env == 'postgresql':
+        return 'postgresql://user:password@localhost/analytics_db'
+    
+    return 'sqlite:///./data/analytics.db'
+
+
+def create_db_engine(database_url: str = None, echo: bool = False):
+    """
+    Crear motor SQLAlchemy.
+    
+    Args:
+        database_url: URL de conexión
+        echo: Si True, mostrar SQL en logs
+    
+    Returns:
+        Motor SQLAlchemy
+    """
+    if database_url is None:
+        database_url = get_database_url()
+    
+    # Configuración específica para SQLite
+    if 'sqlite' in database_url:
+        engine = create_engine(
+            database_url,
+            echo=echo,
+            connect_args={'check_same_thread': False},
+            poolclass=StaticPool,
+        )
+    else:
+        # PostgreSQL
+        engine = create_engine(
+            database_url,
+            echo=echo,
+            pool_pre_ping=True,
+            pool_size=10,
+            max_overflow=20
+        )
+    
+    return engine
+
+
+def init_db(database_url: str = None) -> None:
+    """
+    Inicializar base de datos (crear tablas).
+    
+    Args:
+        database_url: URL de conexión (opcional)
+    """
+    if database_url is None:
+        database_url = get_database_url()
+    
+    engine = create_db_engine(database_url)
+    Base.metadata.create_all(engine)
+    print(f"✅ Database initialized at: {database_url}")
+
+
+def drop_db(database_url: str = None) -> None:
+    """
+    Eliminar todas las tablas (para testing).
+    
+    Args:
+        database_url: URL de conexión (opcional)
+    """
+    if database_url is None:
+        database_url = get_database_url()
+    
+    engine = create_db_engine(database_url)
+    Base.metadata.drop_all(engine)
+    print(f"✅ Database dropped")
+
