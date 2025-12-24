@@ -418,6 +418,59 @@ export async function extractVisibleReviews(page) {
           const authorEl = n.querySelector('[class*="d4r55"], [class*="fontBodyMedium"]:first-child');
           const author = authorEl?.innerText?.trim() || "Unknown";
           
+          let authorPhotoUrl = null;
+          try {
+            const imgEl = n.querySelector("img.NBa7we");
+            if (imgEl && imgEl.src) {
+              authorPhotoUrl = imgEl.src.trim();
+            }
+          } catch (e) {
+            authorPhotoUrl = null;
+          }
+
+          // === NUEVO BLOQUE: extracción de perfil del autor (DOM CONFIRMADO) ===
+          let authorProfile = null;
+          try {
+            const profileEl = n.querySelector("div.RfnDt");
+            if (profileEl) {
+              const raw = profileEl.innerText.trim();
+              if (raw) {
+                // Parseo básico: "Local Guide · 340 reseñas · 1407 fotos"
+                // O "3 reseñas · 1 foto"
+                const reviewsMatch = raw.match(/(\d+)\s+reseñas?/i) || raw.match(/(\d+)\s+reviews?/i);
+                const photosMatch = raw.match(/(\d+)\s+fotos?/i) || raw.match(/(\d+)\s+photos?/i);
+
+                authorProfile = {
+                   isLocalGuide: /local guide/i.test(raw),
+                   reviewsCount: reviewsMatch ? parseInt(reviewsMatch[1], 10) : null,
+                   photosCount: photosMatch ? parseInt(photosMatch[1], 10) : null,
+                   raw: raw
+                };
+              }
+            }
+          } catch (e) {
+            authorProfile = null;
+          }
+
+          // === NUEVO BLOQUE: extracción de fotos adjuntas a la reseña (DOM CONFIRMADO) ===
+          let photos = [];
+          try {
+            const photoButtons = n.querySelectorAll('button.Tya61d');
+            if (photoButtons.length > 0) {
+              photos = Array.from(photoButtons).map(btn => {
+                const bg = btn.style.backgroundImage || '';
+                const match = bg.match(/url\(["']?(.*?)["']?\)/i);
+                
+                return match ? {
+                  index: parseInt(btn.getAttribute('data-photo-index') || '0', 10),
+                  url: match[1]
+                } : null;
+              }).filter(p => p !== null && p.url.startsWith('http'));
+            }
+          } catch (e) {
+            photos = [];
+          }
+
           // Intenta múltiples formas de obtener rating
           let ratingEl = n.querySelector('[aria-label*="estrellas"], [aria-label*="stars"]');
           if (!ratingEl) {
@@ -446,45 +499,137 @@ export async function extractVisibleReviews(page) {
           const dateText = dateEl?.innerText?.trim() || "";
           const date = parseRelativeDate(dateText);
           
-          const likesEl = n.querySelector('.RfnDt span, [class*="likes"]');
-          const likesText = likesEl?.innerText || "0";
-          const likes = parseLikes(likesText);
-          
-          // === NUEVO BLOQUE: extracción de respuesta del propietario ===
-          let ownerResponse = null;
+          let likes = 0;
           try {
-            const ownerBlock = n.querySelector('div.CDe7pd, div.ODSEW-ShBeI-text, div[class*="reply"]');
+            const likesEl = n.querySelector("span.pkWtMe");
+            if (likesEl && likesEl.innerText) {
+              const raw = likesEl.innerText.trim();
+              const parsed = parseInt(raw.replace(/\D+/g, ""), 10);
+              likes = Number.isNaN(parsed) ? 0 : parsed;
+            }
+          } catch (e) {
+            likes = 0;
+          }
+          
+          // === NUEVO BLOQUE: extracción de respuesta del propietario (DOM CONFIRMADO) ===
+          let responseFromOwnerText = null;
+          let responseFromOwnerDate = null;
+
+          try {
+            const ownerBlock = n.querySelector("div.CDe7pd");
             if (ownerBlock) {
-              const ownerLabel =
-                n.querySelector('div.CDe7pd')?.innerText ||
-                n.querySelector('span[class*="owner"]')?.innerText ||
-                "Respuesta del propietario";
+              const textEl = ownerBlock.querySelector("div.wiI7pd");
+              const dateEl = ownerBlock.querySelector("span.DZSIDd");
 
-              const ownerText =
-                n.querySelector('div.ODSEW-ShBeI-text')?.innerText ||
-                n.querySelector('span[class*="reply-text"]')?.innerText ||
-                "";
-
-              if (ownerText.trim()) {
-                ownerResponse = {
-                  label: ownerLabel,
-                  text: ownerText.trim().substring(0, 5000)
-                };
+              if (textEl && textEl.innerText.trim()) {
+                responseFromOwnerText = textEl.innerText.trim();
+              }
+              if (dateEl && dateEl.innerText.trim()) {
+                responseFromOwnerDate = dateEl.innerText.trim();
+              }
+              
+              if (responseFromOwnerText) { 
+                 console.log("[DEBUG] Respuesta propietario detectada"); 
               }
             }
           } catch (e) {
-            // Silenciar errores en extracción de respuesta del propietario
+            // silencio intencional
+          }
+
+          // === NUEVO BLOQUE: extracción de encuesta (DOM CONFIRMADO) ===
+          let survey = null;
+          try {
+            const surveyBlocks = n.querySelectorAll("div.PBK6be");
+            if (surveyBlocks.length > 0) {
+              survey = {};
+              surveyBlocks.forEach(block => {
+                const spans = block.querySelectorAll("span.RfDO5c span");
+                if (spans.length === 0) return;
+
+                // Caso 1: clave en bold + valor texto
+                if (spans.length >= 2) {
+                  const key = spans[0].innerText.replace(":", "").trim();
+                  const value = spans[1].innerText.trim();
+                  if (key && value) {
+                    survey[key] = value;
+                  }
+                  return;
+                }
+
+                // Caso 2: "<b>Clave:</b> valor"
+                const raw = spans[0].innerText.trim();
+                const parts = raw.split(":");
+                if (parts.length === 2) {
+                  const k = parts[0].trim();
+                  const v = parts[1].trim();
+                  if (k && v) {
+                    survey[k] = isNaN(v) ? v : Number(v);
+                  }
+                }
+              });
+
+              if (Object.keys(survey).length === 0) {
+                survey = null;
+              }
+            }
+          } catch (e) {
+            survey = null;
+          }
+          
+          // === NUEVO BLOQUE: extracción de idioma original (DOM CONFIRMADO) ===
+          let language = "es";
+          let languageLabel = "español";
+
+          try {
+            const langBtn = n.querySelector('button[role="switch"][aria-checked][data-review-id]');
+
+            if (langBtn) {
+              const txt = langBtn.innerText || "";
+              const m = txt.match(/\(([^)]+)\)/i);
+              if (m && m[1]) {
+                languageLabel = m[1].trim().toLowerCase();
+
+                const langMap = {
+                  "neerlandés": "nl",
+                  "holandés": "nl",
+                  "inglés": "en",
+                  "francés": "fr",
+                  "alemán": "de",
+                  "italiano": "it",
+                  "portugués": "pt",
+                  "catalán": "ca",
+                  "chino": "zh",
+                  "japonés": "ja",
+                  "coreano": "ko",
+                  "ruso": "ru",
+                  "árabe": "ar",
+                  "polaco": "pl"
+                };
+
+                language = langMap[languageLabel] || "unknown";
+              }
+            }
+          } catch (e) {
+            // silencio intencional
           }
           
           return { 
             id, 
-            author, 
+            author,
+            authorPhotoUrl,
+            authorProfile,
             rating,
             text: text.substring(0, 5000),
+            photos, // Nuevo campo
             date,
             dateRaw: dateText,
             likes,
-            ownerResponse,
+            responseFromOwnerText,
+            responseFromOwnerDate,
+            hasOwnerResponse: !!responseFromOwnerText,
+            survey,
+            language,
+            languageLabel,
             timestamp: new Date().toISOString()
           };
         }).filter(r => r !== null);
@@ -746,6 +891,279 @@ const gotoWithRetry = async (page, url, options = {}, retries = 3) => {
   return false;
 };
 
+// --- NUEVA FASE: INFORMACIÓN (Place Metadata) ---
+export async function openOverviewTab(page) {
+  const selector = 'button[role="tab"][data-tab-index="0"]';
+  try {
+    await page.waitForSelector(selector, { timeout: 5000 });
+    await page.click(selector);
+    await new Promise(r => setTimeout(r, 1200));
+    console.log("[INFO] Pestaña 'Vista general' abierta.");
+    return true;
+  } catch (e) {
+    console.warn("[WARN] No se pudo abrir 'Vista general':", e.message);
+    return false;
+  }
+}
+
+export async function openInfoPanel(page) {
+  const infoSelectors = [
+    'button[role="tab"][data-tab-index="3"]',
+    'div[role="tab"][data-tab-index="3"]',
+    'button[role="tab"][aria-label*="Información sobre"]',
+    'button[role="tab"][aria-label*="About"]'
+  ];
+
+  console.log("[INFO] Intentando abrir pestaña de Información...");
+
+  for (const sel of infoSelectors) {
+    try {
+      const el = await page.$(sel);
+      if (!el) continue;
+
+      // Check if already active
+      const isActive = await page.evaluate(s => {
+        const e = document.querySelector(s);
+        return e?.getAttribute('aria-selected') === 'true';
+      }, sel);
+
+      if (isActive) {
+        console.log(`[INFO] Pestaña Información ya activa. (Selector: ${sel})`);
+        return true;
+      }
+
+      const opened = await safeClick(page, sel, {
+        waitAfterClick: 2000 + Math.random() * 1000
+      });
+
+      if (opened) {
+        // Wait for region visible
+        try {
+          await page.waitForSelector('div[role="region"][aria-label*="Información"], div[role="region"][aria-label*="About"]', { timeout: 5000 });
+        } catch(e) { /* ignore wait error */ }
+        
+        console.log(`[INFO] ✅ Pestaña Información abierta (data-tab-index=3).`);
+        return true;
+      }
+    } catch (err) {
+      console.warn(`[WARN] Fallo al abrir Info con ${sel}: ${err.message}`);
+    }
+  }
+  return false;
+}
+
+export async function extractBaseMetadata(page) {
+  try {
+    console.log("[INFO] Extrayendo metadata BASE desde Vista General...");
+    const place = await page.evaluate(() => {
+      const place = {};
+      place.title = document.querySelector("h1.DUwDvf")?.innerText.trim() || "";
+      place.address = document.querySelector('button[data-item-id="address"] .Io6YTe')?.innerText.trim() || "";
+      place.totalScore = document.querySelector(".fontDisplayLarge")?.innerText.replace(",", ".").trim() || "";
+      place.reviewsCount = document.querySelector('button[jsaction*="reviewChart"] span')?.innerText.replace(/[^\d]/g, "") || "0";
+      place.category = document.querySelector('button[jsaction*="category"]')?.innerText.trim() || "";
+      place.website = document.querySelector('a[data-item-id="authority"]')?.href || "";
+      place.phoneNumber = document.querySelector('button[data-item-id^="phone"] .Io6YTe')?.innerText.trim() || "";
+      place.plusCode = document.querySelector('button[data-item-id="oloc"] .Io6YTe')?.innerText.trim() || "";
+      place.openingStatus = document.querySelector('div[aria-label*="Horario"] .ZDu9vd')?.innerText.trim() || "";
+      
+      // === NUEVO: Extracción de imagen de perfil del negocio (Hero Image) ===
+      const imgEl = document.querySelector('div.RZ66Rb img') || document.querySelector('button[aria-label^="Foto"] img');
+      place.profileImageUrl = imgEl?.src || null;
+      // ====================================================================
+
+      place.url = window.location.href;
+      place.scrapedAt = new Date().toISOString();
+      return place;
+    });
+    return place;
+  } catch (e) {
+    console.warn(`[WARN] Error extrayendo metadata base: ${e.message}`);
+    return null;
+  }
+}
+
+export async function extractPopularTimes(page) {
+  const data = {};
+  console.log("[INFO] Intentando extraer Horas Punta (Popular Times)...");
+
+  try {
+    const containerSelector = 'div.UmE4Qe[aria-label^="Horas punta"]';
+    const container = await page.$(containerSelector);
+    
+    if (!container) {
+      console.log("[INFO] No se encontró bloque de Horas Punta.");
+      return null;
+    }
+
+    const getDay = async () => {
+      return page.$eval(
+        'span.uEubGf.NlVald',
+        el => el.innerText.trim().toLowerCase()
+      ).catch(() => null);
+    };
+
+    const extractDayData = async () => {
+      return page.$$eval(
+        'div.dpoVLd[role="img"][aria-label]',
+        nodes => {
+          return nodes.map(n => {
+            const label = n.getAttribute("aria-label") || "";
+            // Regex ajustada para "Nivel de ocupación: 76 % (hora: 11:00)."
+            const m = label.match(/(\d+)\s*%.*hora:\s*(\d{1,2}:\d{2})/i);
+            if (!m) return null;
+            return {
+              hour: m[2],
+              occupancy: parseInt(m[1], 10)
+            };
+          }).filter(Boolean);
+        }
+      );
+    };
+
+    // Flechas de navegación
+    const prevBtnSelector = 'button[aria-label="Ir al día anterior"]';
+    const nextBtnSelector = 'button[aria-label="Ir al día siguiente"]';
+
+    // 1. Ir al primer día disponible (retroceder hasta 7 veces para asegurar inicio)
+    //    Ojo: A veces Google centra en el día actual.
+    for (let i = 0; i < 7; i++) {
+      const prevBtn = await page.$(prevBtnSelector);
+      if (prevBtn) {
+        await prevBtn.click();
+        await new Promise(r => setTimeout(r, 300));
+      } else {
+        break; // Ya no hay botón anterior
+      }
+    }
+
+    // 2. Recorrer 7 días hacia adelante
+    for (let i = 0; i < 7; i++) {
+      // Pequeña espera para asegurar render del día
+      await new Promise(r => setTimeout(r, 500));
+      
+      const day = await getDay();
+      if (day && !data[day]) {
+        const dayData = await extractDayData();
+        if (dayData && dayData.length > 0) {
+          data[day] = dayData;
+          console.log(`[INFO] Horas punta extraídas para: ${day} (${dayData.length} horas)`);
+        }
+      }
+
+      const nextBtn = await page.$(nextBtnSelector);
+      if (nextBtn) {
+        await nextBtn.click();
+        await new Promise(r => setTimeout(r, 400));
+      } else {
+        break; // Fin de la navegación
+      }
+    }
+
+    const totalDays = Object.keys(data).length;
+    console.log(`[INFO] Total días con horas punta: ${totalDays}`);
+    return totalDays > 0 ? data : null;
+
+  } catch (e) {
+    console.warn(`[WARN] Error extrayendo Horas Punta: ${e.message}`);
+    return null;
+  }
+}
+
+export async function extractRatingDistribution(page) {
+  const selector = 'div.ExlQHd tr.BHOKXe[role="img"][aria-label]';
+  
+  try {
+    const exists = await page.$(selector);
+    if (!exists) {
+        console.log("[INFO] No se encontró gráfico de distribución de ratings.");
+        return {};
+    }
+  
+    console.log("[INFO] Extrayendo distribución de ratings...");
+    const dist = await page.$$eval(selector, rows => {
+      const dist = {};
+      rows.forEach(row => {
+        const label = row.getAttribute("aria-label") || "";
+        // Regex para "5 estrellas, 32 reseñas" o "5 stars, 32 reviews"
+        const m = label.match(/(\d)\s*(?:estrellas?|stars?),\s*(\d+)/i);
+        if (m) {
+          const stars = m[1];
+          const count = parseInt(m[2], 10);
+          dist[stars] = count;
+        }
+      });
+      return dist;
+    });
+    
+    console.log(`[INFO] Distribución extraída: ${JSON.stringify(dist)}`);
+    return dist;
+
+  } catch (e) {
+    console.warn(`[WARN] Error extrayendo distribución de ratings: ${e.message}`);
+    return {};
+  }
+}
+
+export async function extractReviewTopics(page) {
+  const selector = 'div[aria-label="Filtrar reseñas"][role="radiogroup"] button.e2moi[role="radio"][aria-label]';
+  if (!(await page.$(selector))) return [];
+
+  return page.$$eval(selector, buttons => {
+    const topics = [];
+
+    buttons.forEach(btn => {
+      const label = btn.getAttribute("aria-label") || "";
+
+      // Excluir "Todas las reseñas"
+      if (/todas/i.test(label)) return;
+
+      // Excluir "+X"
+      if (/ver\s+\d+/i.test(label)) return;
+
+      // Parsear: "pistacho, mencionado en 5 reseñas"
+      const m = label.match(/^(.*?),\s*mencionado\s+en\s+(\d+)/i);
+      if (!m) return;
+
+      topics.push({
+        topic: m[1].trim(),
+        mentions: parseInt(m[2], 10)
+      });
+    });
+
+    return topics;
+  });
+}
+
+export async function extractFeatures(page) {
+  try {
+    console.log("[INFO] Extrayendo features desde Información...");
+    const features = await page.evaluate(() => {
+      const features = {};
+      const featureBlocks = document.querySelectorAll('div.iP2t7d.fontBodyMedium');
+      featureBlocks.forEach(block => {
+        const h2 = block.querySelector('h2.iL3Qke');
+        const ul = block.querySelector('ul.ZQ6we');
+        if (h2 && ul) {
+          const key = h2.innerText.trim();
+          const values = [];
+          ul.querySelectorAll('li span[aria-label]').forEach(span => {
+             values.push(span.getAttribute('aria-label'));
+          });
+          if (key && values.length > 0) {
+            features[key] = values;
+          }
+        }
+      });
+      return features;
+    });
+    return features;
+  } catch (e) {
+    console.warn(`[WARN] Error extrayendo features: ${e.message}`);
+    return {};
+  }
+}
+
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
@@ -756,6 +1174,7 @@ puppeteer.use(AnonymizeUAPlugin());
 export async function massScrapeReviews() {
   let browser = null;
   let dataDir = null;
+  let placeMetadataGlobal = null; // Variable para conservar metadata en memoria
   
   try {
     // 📋 Lee parámetros desde flags
@@ -875,6 +1294,52 @@ export async function massScrapeReviews() {
     process.exit(1);
   }
 
+  // === NUEVA FASE: METADATA Y FEATURES (Vista General -> Información) ===
+  try {
+    // 1. Vista General (Metadata Base)
+    await openOverviewTab(page);
+    const baseMetadata = await extractBaseMetadata(page);
+    
+    if (baseMetadata) {
+      placeMetadataGlobal = baseMetadata;
+      console.log(`[INFO] Metadata base extraída: ${baseMetadata.title}`);
+      
+      // 1.1 Extraer Horas Punta (Popular Times) - SOLO si estamos en Vista General
+      const popularTimes = await extractPopularTimes(page);
+      if (popularTimes) {
+        placeMetadataGlobal.popularTimes = popularTimes;
+        console.log(`[INFO] Popular Times integrados en objeto place.`);
+      }
+      
+    } else {
+        placeMetadataGlobal = { title: "Unknown", url: page.url(), scrapedAt: new Date().toISOString() }; // Fallback
+    }
+
+    // 2. Información (Features)
+    await openInfoPanel(page);
+    // Pequeña espera para render
+    await new Promise(r => setTimeout(r, 1500 + Math.random() * 1000));
+    
+    const features = await extractFeatures(page);
+    if (placeMetadataGlobal) {
+        placeMetadataGlobal.features = features;
+        console.log(`[INFO] Features integradas: ${Object.keys(features).length} categorías.`);
+    }
+
+    // Guardado preliminar
+    if (placeMetadataGlobal) {
+      const safeName = cleanBusinessName(placeMetadataGlobal.title) || `Lugar_${placeId}`;
+      const tempDir = createDataDirectory(safeName, placeId);
+      const placeFile = path.join(tempDir, `place_info.json`);
+      fs.writeFileSync(placeFile, JSON.stringify(placeMetadataGlobal, null, 2));
+      console.log(`[INFO] Place info guardado correctamente en: ${placeFile}`);
+    }
+
+  } catch (e) {
+    console.warn(`[WARN] ⚠️ Fallo en fase Metadata/Features (continuando flujo): ${e.message}`);
+  }
+  // ==================================================
+
   // Abre panel de reseñas
   await new Promise(resolve => setTimeout(resolve, 2000));
 
@@ -898,6 +1363,22 @@ export async function massScrapeReviews() {
   }
   if (retries >= maxRetries) throw new Error("❌ Fallo persistente: no se pudo abrir el panel de reseñas.");
 
+  // === NUEVO: Extraer distribución de ratings (Antes del scroll) ===
+  const ratingDistribution = await extractRatingDistribution(page);
+  if (placeMetadataGlobal && ratingDistribution && Object.keys(ratingDistribution).length > 0) {
+    placeMetadataGlobal.ratingDistribution = ratingDistribution;
+    console.log("[INFO] Distribución de ratings integrada en metadata.");
+  }
+  
+  // === NUEVO: Extraer tópicos de reseñas (Antes del scroll) ===
+  const reviewTopics = await extractReviewTopics(page);
+  if (placeMetadataGlobal && reviewTopics && reviewTopics.length > 0) {
+    placeMetadataGlobal.reviewTopics = reviewTopics;
+    console.log(`[INFO] Tópicos de reseñas extraídos: ${reviewTopics.length} temas.`);
+  }
+  // ==========================================================
+  // ==============================================================
+
   // 🧩 Extraer nombre del negocio y crear directorio con la estructura correcta
   const apiKey = process.env.GOOGLE_MAPS_API_KEY;
   let businessName = await extractBusinessName(page, placeId, apiKey);
@@ -909,7 +1390,7 @@ export async function massScrapeReviews() {
   dataDir = createDataDirectory(businessName, placeId);
   console.log(`📁 Directorio de datos: ${dataDir}`);
 
-  // Ordenar por "Más recientes" si es posible (tolerante a fallos)
+  // Ordenar por "Más recientes" si es posible (Determinista via role="menuitemradio")
   try {
     console.log("[INFO] 🔄 Intentando ordenar reseñas por 'Más recientes'...");
     
@@ -927,46 +1408,68 @@ export async function massScrapeReviews() {
         await orderBtn.click();
         console.log(`[INFO] ✓ Botón ordenar clickeado: ${selector}`);
         orderBtnClicked = true;
+        // Esperar a que el menú aparezca (role="menu" o elementos role="menuitemradio")
+        try {
+          await page.waitForSelector('[role="menuitemradio"]', { timeout: 3000 });
+        } catch (e) {
+          console.warn("[WARN] Timeout esperando menuitemradio, intentando continuar...");
+        }
         await new Promise(resolve => setTimeout(resolve, 800 + Math.random() * 800));
         break;
       }
     }
 
     if (orderBtnClicked) {
-      const menuItems = await page.evaluate(() => {
-        return Array.from(document.querySelectorAll('[role="menuitem"], [role="option"], .goog-menuitem, li'))
-          .filter(el => {
-            const text = (el.textContent || '').toLowerCase();
-            return /más recientes|recientes|newest|recent/i.test(text) && el.offsetParent !== null;
-          })
-          .map(el => ({
-            text: el.textContent?.trim() || '',
-            visible: el.offsetParent !== null
-          }));
-      });
-
-      if (menuItems.length > 0) {
-        const recentOption = menuItems[0];
-        console.log(`[INFO] Encontrada opción: "${recentOption.text}"`);
+      // Lógica determinista basada en ARIA roles
+      const result = await page.evaluate(async () => {
+        const items = Array.from(document.querySelectorAll('[role="menuitemradio"]'));
         
-        const clicked = await page.evaluate(() => {
-          const items = Array.from(document.querySelectorAll('[role="menuitem"], [role="option"], .goog-menuitem, li'));
-          for (const el of items) {
-            const text = (el.textContent || '').toLowerCase();
-            if (/más recientes|recientes|newest|recent/i.test(text) && el.offsetParent !== null) {
-              el.click();
-              return true;
-            }
-          }
-          return false;
+        // Buscar la opción correcta
+        const targetOption = items.find(el => {
+          const text = (el.innerText || el.getAttribute('aria-label') || '').toLowerCase();
+          return text.includes('más recientes') || 
+                 text.includes('recientes') || 
+                 text.includes('newest') || 
+                 text.includes('recent');
         });
 
-        if (clicked) {
+        if (!targetOption) return { success: false, reason: "Opción 'Más recientes' no encontrada" };
+
+        // Verificar si ya está seleccionado
+        const isChecked = targetOption.getAttribute('aria-checked') === 'true';
+        if (isChecked) return { success: true, alreadyActive: true };
+
+        // Clickar
+        targetOption.click();
+        return { success: true, clicked: true };
+      });
+
+      if (result.success) {
+        if (result.alreadyActive) {
+          console.log("[INFO] ✅ Orden ya era: Más recientes");
+        } else {
           console.log("[INFO] ✅ Orden aplicado: Más recientes");
-          await new Promise(resolve => setTimeout(resolve, 1000 + Math.random() * 1000));
+          // Esperar re-render y verificar
+          await new Promise(r => setTimeout(r, 1500));
+          
+          // Verificación post-click opcional
+          const confirmed = await page.evaluate(() => {
+             const items = Array.from(document.querySelectorAll('[role="menuitemradio"]'));
+             const target = items.find(el => {
+               const text = (el.innerText || el.getAttribute('aria-label') || '').toLowerCase();
+               return text.includes('más recientes') || text.includes('newest');
+             });
+             return target?.getAttribute('aria-checked') === 'true';
+          });
+          
+          if (confirmed) {
+             console.log("[INFO] ✅ Verificación post-click: Exitoso (aria-checked=true)");
+          } else {
+             console.warn("[WARN] ⚠️ Verificación post-click: aria-checked no cambió (puede ser falso negativo si el menú se cerró)");
+          }
         }
       } else {
-        console.log("[WARN] ⚠️ No se encontró opción 'Más recientes' en el menú");
+        console.warn(`[WARN] ⚠️ No se pudo aplicar orden: ${result.reason}`);
       }
     } else {
       console.log("[WARN] ⚠️ No se encontró botón de ordenamiento");
@@ -998,14 +1501,14 @@ export async function massScrapeReviews() {
     }
 
     // === NUEVO BLOQUE: mostrar resumen de respuestas del propietario ===
-    const reviewsWithOwnerResponse = reviews.filter(r => r.ownerResponse && r.ownerResponse.text);
+    const reviewsWithOwnerResponse = reviews.filter(r => r.hasOwnerResponse);
     if (reviewsWithOwnerResponse.length > 0) {
       console.log(`\n💬 Respuestas del propietario encontradas: ${reviewsWithOwnerResponse.length}/${totalOut}`);
       // Mostrar las primeras 3 como preview
       reviewsWithOwnerResponse.slice(0, 3).forEach((r, idx) => {
         console.log(`\n  ⭐ Reseña ${idx + 1}: ${r.author} - ${r.rating} estrellas`);
         console.log(`     📝 "${r.text.substring(0, 80)}${r.text.length > 80 ? '...' : ''}"`);
-        console.log(`     💬 Respuesta: "${r.ownerResponse.text.substring(0, 80)}${r.ownerResponse.text.length > 80 ? '...' : ''}"`);
+        console.log(`     💬 Respuesta: "${r.responseFromOwnerText.substring(0, 80)}${r.responseFromOwnerText.length > 80 ? '...' : ''}"`);
       });
       if (reviewsWithOwnerResponse.length > 3) {
         console.log(`     ... y ${reviewsWithOwnerResponse.length - 3} respuestas más`);
@@ -1016,7 +1519,24 @@ export async function massScrapeReviews() {
 
     // 💾 Guardado usando el módulo storage.js mejorado
     console.log("[INFO] Guardando reseñas en directorio de datos...");
-    const reviewsPath = saveReviews(reviews, placeId, { dataDir, businessName });
+    
+    // INTEGRACIÓN METADATA EN JSON FINAL
+    const fileBaseName = cleanBusinessName(businessName) || `reviews_${placeId}`;
+    const fileName = `${fileBaseName}.json`;
+    const reviewsPath = path.join(dataDir, fileName);
+
+    const output = {
+      place: placeMetadataGlobal || {
+        title: businessName,
+        url: page.url(),
+        scrapedAt: new Date().toISOString()
+      },
+      reviews
+    };
+
+    fs.writeFileSync(reviewsPath, JSON.stringify(output, null, 2));
+    console.log(`[INFO] Metadata integrada en JSON final`);
+    console.log(`💾 Guardadas ${reviews.length} reseñas en ${reviewsPath}`);
     
     // 💾 Guardar metadatos
     const metadata = {
